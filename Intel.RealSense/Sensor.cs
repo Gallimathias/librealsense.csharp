@@ -18,7 +18,8 @@ namespace Intel.RealSense
         public float DepthScale
             => NativeMethods.rs2_get_depth_scale(instance, out var error);
 
-        public IntPtr Instance => instance;
+        protected IntPtr Instance => instance;
+
         public CameraInfos Info
         {
             get

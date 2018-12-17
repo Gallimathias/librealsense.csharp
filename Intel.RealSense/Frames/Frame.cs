@@ -15,7 +15,7 @@ namespace Intel.RealSense.Frames
         }
 
         public bool IsComposite => NativeMethods.rs2_is_frame_extendable_to(Instance.Handle, Extension.CompositeFrame, out var error) > 0;
-        public IntPtr Data => NativeMethods.rs2_get_frame_data(Instance.Handle, out var error);
+
         public StreamProfile Profile => StreamProfile.Pool.Get(NativeMethods.rs2_get_frame_stream_profile(Instance.Handle, out var error));
         public ulong Number
         {
@@ -27,8 +27,8 @@ namespace Intel.RealSense.Frames
         }
         public double Timestamp => NativeMethods.rs2_get_frame_timestamp(Instance.Handle, out var error);
         public TimestampDomain TimestampDomain => NativeMethods.rs2_get_frame_timestamp_domain(Instance.Handle, out var error);
-
-        public IntPtr NativePtr => Instance.Handle; //TODO: Native pointers should not be visible
+        
+        protected IntPtr Data => NativeMethods.rs2_get_frame_data(Instance.Handle, out var error);
 
         internal HandleRef Instance;
 
@@ -99,5 +99,8 @@ namespace Intel.RealSense.Frames
             Dispose(false);
         }
         #endregion
+
+        public static explicit operator IntPtr(Frame frame)
+            => frame.Instance.Handle;
     }
 }

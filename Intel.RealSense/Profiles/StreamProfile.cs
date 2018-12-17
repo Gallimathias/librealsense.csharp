@@ -12,9 +12,7 @@ namespace Intel.RealSense.Profiles
         {
             Pool = new ProfilePool<StreamProfile>();
         }
-
-        public IntPtr Ptr => Instance.Handle;
-
+        
         public Stream Stream => stream;
         public Format Format => format;
         public int Framerate => framerate;
@@ -85,5 +83,8 @@ namespace Intel.RealSense.Profiles
             Instance = new HandleRef(this, IntPtr.Zero);
             Pool.Release(this);
         }
+
+        public static explicit operator IntPtr(StreamProfile streamProfile)
+            => streamProfile.Instance.Handle;
     }
 }

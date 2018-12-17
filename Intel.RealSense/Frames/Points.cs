@@ -13,8 +13,9 @@ namespace Intel.RealSense.Frames
         }
 
         public int Count => NativeMethods.rs2_get_frame_points_count(Instance.Handle, out var error);
-        public IntPtr VertexData => NativeMethods.rs2_get_frame_vertices(Instance.Handle, out var error);
-        public IntPtr TextureData => NativeMethods.rs2_get_frame_texture_coordinates(Instance.Handle, out var error);
+
+        protected IntPtr VertexData => NativeMethods.rs2_get_frame_vertices(Instance.Handle, out var error);
+        protected IntPtr TextureData => NativeMethods.rs2_get_frame_texture_coordinates(Instance.Handle, out var error);
 
         public Points(IntPtr ptr) : base(ptr)
         {

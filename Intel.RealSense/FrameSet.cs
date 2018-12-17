@@ -19,9 +19,7 @@ namespace Intel.RealSense
         public DepthFrame DepthFrame => FirstOrDefault<DepthFrame>(Stream.Depth, Format.Z16);
         public VideoFrame InfraredFrame => FirstOrDefault<VideoFrame>(Stream.Infrared);
         public VideoFrame ColorFrame => FirstOrDefault<VideoFrame>(Stream.Color);
-
-        public IntPtr NativePtr => Instance.Handle;
-
+        
         internal HandleRef Instance;
         internal readonly FrameEnumerator enumerator;
         internal readonly List<IDisposable> disposables;
@@ -191,5 +189,8 @@ namespace Intel.RealSense
             else
                 return new Frame(ptr);
         }
+
+        public static explicit operator IntPtr(FrameSet frameSet)
+            => frameSet.Instance.Handle;
     }
 }

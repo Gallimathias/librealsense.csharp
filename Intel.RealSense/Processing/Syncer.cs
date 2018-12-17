@@ -19,7 +19,7 @@ namespace Intel.RealSense.Processing
         }
 
         public FrameSet WaitForFrames(uint timeoutMs = 5000) 
-            => FrameSet.Pool.Get(NativeMethods.rs2_wait_for_frame(queue.Instance.Handle, timeoutMs, out var error));
+            => FrameSet.Pool.Next(NativeMethods.rs2_wait_for_frame(queue.Instance.Handle, timeoutMs, out var error));
 
         public bool PollForFrames(out FrameSet result, FramesReleaser releaser = null)
         {
@@ -27,7 +27,7 @@ namespace Intel.RealSense.Processing
 
             if (NativeMethods.rs2_poll_for_frame(queue.Instance.Handle, out IntPtr ptr, out var error) > 0)
             {
-                result = FrameSet.Pool.Get(ptr);
+                result = FrameSet.Pool.Next(ptr);
                 return true;
             }
 

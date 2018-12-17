@@ -1,21 +1,17 @@
 ﻿using Intel.RealSense.Frames;
+using Intel.RealSense.Pooling;
 using Intel.RealSense.Types;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Intel.RealSense
 {
-    public class FrameSet : ICompositeDisposable, IEnumerable<Frame>
+    public class FrameSet : ICompositeDisposable, IEnumerable<Frame>, IAsyncPoolElement
     {
-        internal static readonly FrameSetPool Pool; //Should be reimplemented as Threadsafe Pool.
-
-        static FrameSet()
-        {
-            Pool = new FrameSetPool();
-        }
-
         public DepthFrame DepthFrame => FirstOrDefault<DepthFrame>(Stream.Depth, Format.Z16);
         public VideoFrame InfraredFrame => FirstOrDefault<VideoFrame>(Stream.Infrared);
         public VideoFrame ColorFrame => FirstOrDefault<VideoFrame>(Stream.Color);
@@ -25,6 +21,9 @@ namespace Intel.RealSense
         internal HandleRef Instance;
         internal readonly FrameEnumerator enumerator;
         internal readonly List<IDisposable> disposables;
+
+        private IAsyncPool pool;
+        private bool initialized;
 
         public Frame AsFrame()
         {
@@ -97,32 +96,43 @@ namespace Intel.RealSense
 
         internal FrameSet(IntPtr ptr)
         {
-            Instance = new HandleRef(this, ptr);
-            Count = NativeMethods.rs2_embedded_frames_count(Instance.Handle, out var error);
             enumerator = new FrameEnumerator(this);
             disposables = new List<IDisposable>();
+            initialized = false;
+            Initialize(ptr);
+        }
+
+        internal void Initialize(IntPtr ptr)
+        {
+            if (initialized)
+                return;
+
+            Instance = new HandleRef(this, ptr);
+            Count = NativeMethods.rs2_embedded_frames_count(Instance.Handle, out var error);
+            enumerator.Reset();
+            disposables.Clear();
+            initialized = true;
         }
 
         #region IDisposable Support
-        internal bool disposedValue = false; // To detect redundant calls TODO: internal dispose control should never be externally influenced
+        private bool disposedValue = false; // To detect redundant calls
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (disposedValue)
+                throw new ObjectDisposedException(nameof(FrameSet));
+
+            if (disposing)
             {
-                if (disposing)
-                {
-                    // TODO: dispose managed state (managed objects).
-                }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-
-                disposables.ForEach(d => d?.Dispose());
-
-                Release();
-                disposedValue = true;
+                pool.OnFinalize(this, CancellationToken.None);
+                // TODO: dispose managed state (managed objects).
             }
+
+            // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+            // TODO: set large fields to null.
+
+            disposables.ForEach(d => d?.Dispose());
+            disposedValue = true;
         }
 
         // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
@@ -142,16 +152,6 @@ namespace Intel.RealSense
         }
         #endregion
 
-        public void Release()
-        {
-            if (Instance.Handle != IntPtr.Zero)
-                NativeMethods.rs2_release_frame(Instance.Handle);
-
-            Instance = new HandleRef(this, IntPtr.Zero);
-
-            Pool.Release(this); //TODO: Should be reimplemented as Threadsafe Pool.
-        }
-
         public void ForEach(Action<Frame> action)
         {
             for (int i = 0; i < Count; i++)
@@ -160,25 +160,27 @@ namespace Intel.RealSense
                     action(frame);
             }
         }
-                
+
         public void AddDisposable(IDisposable disposable)
         {
             disposables.Add(disposable);
         }
 
-        public static FrameSet FromFrame(Frame composite)
+        public static FrameSet FromFrame(Frame composite, Pool<FrameSet> pool)
         {
-            if (composite.IsComposite)
-            {
-                NativeMethods.rs2_frame_add_ref(composite.Instance.Handle, out object error);
-                return Pool.Get(composite.Instance.Handle);
-            }
+            if (!composite.IsComposite)
+                throw new ArgumentException("The frame is a not composite frame", nameof(composite));
 
-            throw new ArgumentException("The frame is a not composite frame", nameof(composite));
+            NativeMethods.rs2_frame_add_ref(composite.Instance.Handle, out object error);
+            var task = pool.Next(CancellationToken.None);
+            task.Wait();
+            var frameSet = task.Result;
+            frameSet.Initialize(composite.Instance.Handle);
+            return frameSet;
         }
         [Obsolete("This method is obsolete. Use DisposeWith method instead")]
         public static FrameSet FromFrame(Frame composite, FramesReleaser releaser)
-            => FromFrame(composite).DisposeWith(releaser);
+            => FromFrame(composite, null as Pool<FrameSet>).DisposeWith(releaser);
 
         internal static Frame CreateFrame(IntPtr ptr)
         {
@@ -190,6 +192,23 @@ namespace Intel.RealSense
                 return new VideoFrame(ptr);
             else
                 return new Frame(ptr);
+        }
+
+        public Task Pool(IAsyncPool pool, CancellationToken cancellationToken)
+        {
+            this.pool = pool;
+            return Task.CompletedTask;
+        }
+
+        public async Task Release(CancellationToken cancellationToken)
+        {
+            if (Instance.Handle != IntPtr.Zero)
+                NativeMethods.rs2_release_frame(Instance.Handle);
+
+            Instance = new HandleRef(this, IntPtr.Zero);
+            initialized = false;
+
+            await pool.OnRelease(this, cancellationToken);
         }
     }
 }

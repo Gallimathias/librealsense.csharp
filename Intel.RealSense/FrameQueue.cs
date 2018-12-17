@@ -39,7 +39,7 @@ namespace Intel.RealSense
         public FrameSet WaitForFrames(uint timeoutMs = 5000)
         {
             var ptr = NativeMethods.rs2_wait_for_frame(Instance.Handle, timeoutMs, out var error);
-            return FrameSet.Pool.Get(ptr);
+            return FrameSet.Pool.Next(ptr);
         }
 
         public void Enqueue(Frame f)

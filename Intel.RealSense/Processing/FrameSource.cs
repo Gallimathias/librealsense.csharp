@@ -51,7 +51,7 @@ namespace Intel.RealSense.Processing
                 }
 
                 var frame_ref = NativeMethods.rs2_allocate_composite_frame(Instance.Handle, frameRefs, fl, out error);
-                return FrameSet.Pool.Get(frame_ref);
+                return FrameSet.Pool.Next(frame_ref);
             }
             finally
             {

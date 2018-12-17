@@ -37,7 +37,7 @@ namespace Intel.RealSense
         public FrameSet WaitForFrames(uint timeoutMs = 5000)
         {
             var ptr = NativeMethods.rs2_pipeline_wait_for_frames(instance.Handle, timeoutMs, out var error);
-            return FrameSet.Pool.Get(ptr);
+            return FrameSet.Pool.Next(ptr);
         }
 
         public bool PollForFrames(out FrameSet result)
@@ -46,7 +46,7 @@ namespace Intel.RealSense
 
             if (NativeMethods.rs2_pipeline_poll_for_frames(instance.Handle, out IntPtr ptr, out var error) > 0)
             {
-                result = FrameSet.Pool.Get(ptr);
+                result = FrameSet.Pool.Next(ptr);
                 return true;
             }
             

@@ -11,19 +11,9 @@ namespace Intel.RealSense.Pooling
         void Pool(IPool pool);
         void Release();
     }
-    public interface IPoolElement<T>
+    public interface IAsyncPoolElement
     {
-        void Pool(IPool<T> pool);
-        void Release();
-    }
-    public interface IPoolElementAsync
-    {
-        Task Pool(IPoolAsync pool, CancellationToken cancellationToken);
-        Task Release(CancellationToken cancellationToken);
-    }
-    public interface IPoolElementAsync<T>
-    {
-        Task Pool(IPoolAsync<T> pool, CancellationToken cancellationToken);
+        Task Pool(IAsyncPool pool, CancellationToken cancellationToken);
         Task Release(CancellationToken cancellationToken);
     }
 }

@@ -12,22 +12,10 @@ namespace Intel.RealSense.Pooling
         void OnRelease(IPoolElement poolElement);
         void OnFinalize(IPoolElement poolElement);
     }
-    public interface IPool<T>
-    {
-        void OnError(Exception exception);
-        void OnRelease(IPoolElement<T> poolElement);
-        void OnFinalize(IPoolElement<T> poolElement);
-    }
-    public interface IPoolAsync
+    public interface IAsyncPool
     {
         Task OnError(Exception exception, CancellationToken cancellationToken);
-        Task OnRelease(IPoolElement poolElement, CancellationToken cancellationToken);
-        Task OnFinalize(IPoolElement poolElement, CancellationToken cancellationToken);
-    }
-    public interface IPoolAsync<T>
-    {
-        Task OnError(Exception exception, CancellationToken cancellationToken);
-        Task OnRelease(IPoolElement<T> poolElement, CancellationToken cancellationToken);
-        Task OnFinalize(IPoolElement<T> poolElement, CancellationToken cancellationToken);
+        Task OnRelease(IAsyncPoolElement poolElement, CancellationToken cancellationToken);
+        Task OnFinalize(IAsyncPoolElement poolElement, CancellationToken cancellationToken);
     }
 }

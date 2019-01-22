@@ -1,35 +1,48 @@
-using Intel.RealSense.Types;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense.Devices
+namespace Intel.RealSense
 {
     public class Device : IDisposable
     {
-        public CameraInfos Info
-        {
-            get
-            {
-                if (cameraInfo == null)
-                    cameraInfo = new CameraInfos(Instance);
-
-                return cameraInfo;
-            }
-        }
-        /// <summary>
-        /// create a static snapshot of all connected devices at the time of the call
-        /// </summary>
-        public SensorList Sensors => QuerySensors();
-
-        internal IntPtr Instance;
-
-        private CameraInfos cameraInfo;
+        public IntPtr m_instance;
 
         internal Device(IntPtr dev)
         {
             //if (dev == IntPtr.Zero)
             //    throw new ArgumentNullException();
-            Instance = dev;
+            m_instance = dev;
+        }
+
+        public class CameraInfos
+        {
+            readonly IntPtr m_device;
+            public CameraInfos(IntPtr device) { m_device = device; }
+
+            public string this[CameraInfo info]
+            {
+                get
+                {
+                    object err;
+                    if (NativeMethods.rs2_supports_device_info(m_device, info, out err) > 0)
+                        return Marshal.PtrToStringAnsi(NativeMethods.rs2_get_device_info(m_device, info, out err));
+                    return null;
+                }
+            }
+        }
+
+        CameraInfos m_info;
+
+        public CameraInfos Info
+        {
+            get
+            {
+                if (m_info == null)
+                    m_info = new CameraInfos(m_instance);
+                return m_info;
+            }
         }
 
         /// <summary>
@@ -38,20 +51,24 @@ namespace Intel.RealSense.Devices
         /// <returns></returns>
         public SensorList QuerySensors()
         {
-            var ptr = NativeMethods.rs2_query_sensors(Instance, out var error);
+            object error;
+            var ptr = NativeMethods.rs2_query_sensors(m_instance, out error);
             return new SensorList(ptr);
+        }
+
+        /// <summary>
+        /// create a static snapshot of all connected devices at the time of the call
+        /// </summary>
+        public SensorList Sensors
+        {
+            get
+            {
+                return QuerySensors();
+            }
         }
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
 
         protected virtual void Dispose(bool disposing)
         {
@@ -59,46 +76,32 @@ namespace Intel.RealSense.Devices
             {
                 if (disposing)
                 {
-                    cameraInfo = null;
+                    // TODO: dispose managed state (managed objects).
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
                 // TODO: set large fields to null.
-                NativeMethods.rs2_delete_device(Instance);
-                Instance = IntPtr.Zero;
+                NativeMethods.rs2_delete_device(m_instance);
 
                 disposedValue = true;
             }
         }
 
+        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
         ~Device()
         {
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
             Dispose(false);
         }
 
-        #endregion
-
-        public class CameraInfos
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
         {
-            public string this[CameraInfo info]
-            {
-                get
-                {
-                    if (NativeMethods.rs2_supports_device_info(device, info, out var err) > 0)
-                        return Marshal.PtrToStringAnsi(NativeMethods.rs2_get_device_info(device, info, out err));
-
-                    return null;
-                }
-            }
-
-            private readonly IntPtr device;
-
-            public CameraInfos(IntPtr device)
-            {
-                this.device = device;
-            }
-
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            // TODO: uncomment the following line if the finalizer is overridden above.
+            GC.SuppressFinalize(this);
         }
+        #endregion
     }
 }

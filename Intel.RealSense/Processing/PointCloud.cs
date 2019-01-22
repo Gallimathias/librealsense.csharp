@@ -1,9 +1,9 @@
-﻿using Intel.RealSense.Frames;
-using Intel.RealSense.Types;
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
+using System.Linq;
 
-namespace Intel.RealSense.Processing
+namespace Intel.RealSense
 {
     public class PointCloud : ProcessingBlock
     {
@@ -13,8 +13,9 @@ namespace Intel.RealSense.Processing
 
         public PointCloud()
         {
-            Instance = new HandleRef(this, NativeMethods.rs2_create_pointcloud(out var error));
-            NativeMethods.rs2_start_processing_queue(Instance.Handle, queue.Instance.Handle, out error);
+            object error;
+            m_instance = new HandleRef(this, NativeMethods.rs2_create_pointcloud(out error));
+            NativeMethods.rs2_start_processing_queue(m_instance.Handle, queue.m_instance.Handle, out error);
 
             streamFilter = Options[Option.StreamFilter];
             formatFilter = Options[Option.StreamFormatFilter];
@@ -23,20 +24,18 @@ namespace Intel.RealSense.Processing
 
         [Obsolete("This method is obsolete. Use Process method instead")]
         public Points Calculate(Frame original, FramesReleaser releaser = null)
-            => Process(original).DisposeWith(releaser) as Points;
+        {
+            return Process(original).DisposeWith(releaser) as Points;
+        }
 
         public void MapTexture(VideoFrame texture)
         {
-            using (var p = texture.Profile)
-            {
+            using (var p = texture.Profile) {
                 streamFilter.Value = (float)p.Stream;
                 formatFilter.Value = (float)p.Format;
-                indexFilter.Value = p.Index;
+                indexFilter.Value = (float)p.Index;
             }
-
-#pragma warning disable CS0642 // empty statement
-            using (var f = Process(texture)) ;
-#pragma warning restore CS0642 // empty statement
+            using (var f = Process(texture));
         }
     }
 }

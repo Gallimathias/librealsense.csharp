@@ -1,12 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense.Types
+namespace Intel.RealSense
 {
     /// <summary>
     /// Cross-stream extrinsics: encode the topology describing how the different devices are connected.
     /// </summary>
-    [Serializable]
+    [System.Serializable]
     [StructLayout(LayoutKind.Sequential)]
     public struct Extrinsics
     {

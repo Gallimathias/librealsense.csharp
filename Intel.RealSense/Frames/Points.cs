@@ -1,23 +1,47 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense.Frames
+namespace Intel.RealSense
 {
     public class Points : Frame
     {
-        internal static readonly new FramePool<Points> Pool; //Should be reimplemented as Threadsafe Pool.
+        public static readonly new FramePool<Points> Pool = new FramePool<Points>(ptr => new Points(ptr));
 
-        static Points()
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public struct Vertex
         {
-            Pool = new FramePool<Points>(ptr => new Points(ptr));
+            public float x;
+            public float y;
+            public float z;
         }
-
-        public int Count => NativeMethods.rs2_get_frame_points_count(Instance.Handle, out var error);
-        public IntPtr VertexData => NativeMethods.rs2_get_frame_vertices(Instance.Handle, out var error);
-        public IntPtr TextureData => NativeMethods.rs2_get_frame_texture_coordinates(Instance.Handle, out var error);
+        public struct TextureCoordinate
+        {
+            public float u;
+            public float v;
+        }
 
         public Points(IntPtr ptr) : base(ptr)
         {
+        }
+
+        public int Count
+        {
+            get
+            {
+                object error;
+                var h = NativeMethods.rs2_get_frame_points_count(m_instance.Handle, out error);
+                return h;
+            }
+        }
+
+        public IntPtr VertexData
+        {
+            get
+            {
+                object error;
+                return NativeMethods.rs2_get_frame_vertices(m_instance.Handle, out error);
+            }
         }
 
         /// <summary>
@@ -28,9 +52,7 @@ namespace Intel.RealSense.Frames
         {
             if (array == null)
                 throw new ArgumentNullException(nameof(array));
-
             var handle = GCHandle.Alloc(array, GCHandleType.Pinned);
-
             try
             {
                 NativeMethods.memcpy(handle.AddrOfPinnedObject(), VertexData, Count * Marshal.SizeOf(typeof(Vertex)));
@@ -41,7 +63,14 @@ namespace Intel.RealSense.Frames
             }
         }
 
-        
+        public IntPtr TextureData
+        {
+            get
+            {
+                object error;
+                return NativeMethods.rs2_get_frame_texture_coordinates(m_instance.Handle, out error);
+            }
+        }
         /// <summary>
         /// Copy frame data to TextureCoordinate array
         /// </summary>
@@ -65,25 +94,11 @@ namespace Intel.RealSense.Frames
 
         public override void Release()
         {
-            if (Instance.Handle != IntPtr.Zero)
-                NativeMethods.rs2_release_frame(Instance.Handle);
-
-            Instance = new HandleRef(this, IntPtr.Zero);
-            Pool.Release(this); //TODO: Should be reimplemented as Threadsafe Pool.
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct Vertex
-        {
-            public float X;
-            public float Y;
-            public float Z;
-        }
-
-        public struct TextureCoordinate
-        {
-            public float U;
-            public float V;
+            //base.Release();
+            if (m_instance.Handle != IntPtr.Zero)
+                NativeMethods.rs2_release_frame(m_instance.Handle);
+            m_instance = new HandleRef(this, IntPtr.Zero);
+            Pool.Release(this);
         }
     }
 }

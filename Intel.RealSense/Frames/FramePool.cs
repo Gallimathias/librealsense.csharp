@@ -1,39 +1,41 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Text;
 
-namespace Intel.RealSense.Frames
+namespace Intel.RealSense
 {
-    internal class FramePool<T> where T : Frame
+    public class FramePool<T> where T : Frame
     {
-        private readonly ConcurrentStack<T> stack;
-        private readonly Func<IntPtr, T> factory;
+        readonly Stack<T> stack = new Stack<T>();
+        readonly object locker = new object();
+        readonly Func<IntPtr, T> factory;
 
         public FramePool(Func<IntPtr, T> factory)
         {
-            stack = new ConcurrentStack<T>();
-
             this.factory = factory;
         }
 
         public T Get(IntPtr ptr)
         {
-            if (stack.TryPop(out T frame))
+            
+            lock (locker)
             {
-                frame.Instance = new HandleRef(frame, ptr);
-                frame.disposedValue = false;
-                return frame;
+                if(stack.Count == 0)
+                    return factory(ptr);
+                T f = stack.Pop();
+                f.m_instance = new HandleRef(f, ptr);
+                f.disposedValue = false;
+                //NativeMethods.rs2_keep_frame(ptr);
+                return f;
             }
-            else
-            {
-                return factory(ptr);
-            }
-
         }
 
         public void Release(T t)
-            => stack.Push(t);
+        {
+            lock (locker)
+            {
+                stack.Push(t);
+            }
+        }
     }
 }

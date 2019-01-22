@@ -1,44 +1,46 @@
-﻿using Intel.RealSense.Types;
-using System;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense.Profiles
+namespace Intel.RealSense
 {
     public class StreamProfile : IDisposable
     {
-        internal static readonly ProfilePool<StreamProfile> Pool;
+        internal HandleRef m_instance;
 
-        static StreamProfile()
-        {
-            Pool = new ProfilePool<StreamProfile>();
-        }
-
-        public IntPtr Ptr => Instance.Handle;
-
-        public Stream Stream => stream;
-        public Format Format => format;
-        public int Framerate => framerate;
-        public int Index => index;
-        public int UniqueID => uniqueID;
-
-        internal Stream stream;
-        internal Format format;
-        internal int framerate;
-        internal int index;
-        internal int uniqueID;
-
-        internal HandleRef Instance;
+        internal static readonly ProfilePool<StreamProfile> Pool = new ProfilePool<StreamProfile>();
 
         public StreamProfile(IntPtr ptr)
         {
-            Instance = new HandleRef(this, ptr);
+            m_instance = new HandleRef(this, ptr);
 
-            NativeMethods.rs2_get_stream_profile_data(Instance.Handle, out stream, out format, out index, out uniqueID, out framerate, out var e);
+            object e;
+            NativeMethods.rs2_get_stream_profile_data(m_instance.Handle, out _stream, out _format, out _index, out _uniqueId, out _framerate, out e);
+        }
+
+        internal Stream _stream;
+        internal Format _format;
+        internal int _framerate;
+        internal int _index;
+        internal int _uniqueId;
+
+        public Stream Stream { get { return _stream; } }
+        public Format Format { get { return _format; } }
+        public int Framerate { get { return _framerate; } }
+        public int Index { get { return _index; } }
+        public int UniqueID { get { return _uniqueId; } }
+
+        public IntPtr Ptr
+        {
+            get { return m_instance.Handle; }
         }
 
         public Extrinsics GetExtrinsicsTo(StreamProfile other)
         {
-            NativeMethods.rs2_get_extrinsics(Instance.Handle, other.Instance.Handle, out Extrinsics extrinsics, out var error);
+            object error;
+            Extrinsics extrinsics;
+            NativeMethods.rs2_get_extrinsics(m_instance.Handle, other.m_instance.Handle, out extrinsics, out error);
             return extrinsics;
         }
 
@@ -80,9 +82,7 @@ namespace Intel.RealSense.Profiles
 
         public void Release()
         {
-            //if(m_instance.Handle != IntPtr.Zero)
-            //NativeMethods.rs2_delete_str(m_instance.Handle);
-            Instance = new HandleRef(this, IntPtr.Zero);
+            m_instance = new HandleRef(this, IntPtr.Zero);
             Pool.Release(this);
         }
     }

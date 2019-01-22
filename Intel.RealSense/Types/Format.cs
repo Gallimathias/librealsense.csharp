@@ -1,4 +1,8 @@
-﻿namespace Intel.RealSense.Types
+﻿using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+
+namespace Intel.RealSense
 {
     public enum Format
     {
@@ -21,6 +25,6 @@
         MotionXyz32f = 16,
         GpioRaw = 17,
         SixDOF = 18,
-        Disparity32 = 19
+        Disparity32 = 19,
     }
 }

@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense.Types
+namespace Intel.RealSense
 {
-    [Serializable]
+    [System.Serializable]
     [StructLayout(LayoutKind.Sequential)]
     public struct SoftwareVideoStream
     {

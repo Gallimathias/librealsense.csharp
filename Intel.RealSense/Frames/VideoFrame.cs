@@ -1,26 +1,55 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense.Frames
+namespace Intel.RealSense
 {
     public class VideoFrame : Frame
     {
-        internal static new readonly FramePool<VideoFrame> Pool;//TODO: Should be reimplemented as Threadsafe Pool.
-
-
-        static VideoFrame()
-        {
-            Pool = new FramePool<VideoFrame>(ptr => new VideoFrame(ptr));
-        }
-
-        public int Width => NativeMethods.rs2_get_frame_width(Instance.Handle, out var error);
-        public int Height => NativeMethods.rs2_get_frame_height(Instance.Handle, out var error);
-        public int Stride => NativeMethods.rs2_get_frame_stride_in_bytes(Instance.Handle, out var error);
-
-        public int BitsPerPixel => NativeMethods.rs2_get_frame_bits_per_pixel(Instance.Handle, out var error);
+        public static readonly new FramePool<VideoFrame> Pool = new FramePool<VideoFrame>(ptr => new VideoFrame(ptr));
 
         public VideoFrame(IntPtr ptr) : base(ptr)
         {
+        }
+
+        public int Width
+        {
+            get
+            {
+                object error;
+                var w = NativeMethods.rs2_get_frame_width(m_instance.Handle, out error);
+                return w;
+            }
+        }
+
+        public int Height
+        {
+            get
+            {
+                object error;
+                var h = NativeMethods.rs2_get_frame_height(m_instance.Handle, out error);
+                return h;
+            }
+        }
+
+        public int Stride
+        {
+            get
+            {
+                object error;
+                var stride = NativeMethods.rs2_get_frame_stride_in_bytes(m_instance.Handle, out error);
+                return stride;
+            }
+        }
+
+        public int BitsPerPixel
+        {
+            get
+            {
+                object error;
+                var bpp = NativeMethods.rs2_get_frame_bits_per_pixel(m_instance.Handle, out error);
+                return bpp;
+            }
         }
 
         /// <summary>
@@ -32,7 +61,6 @@ namespace Intel.RealSense.Frames
         {
             if (array == null)
                 throw new ArgumentNullException(nameof(array));
-
             var handle = GCHandle.Alloc(array, GCHandleType.Pinned);
             try
             {
@@ -44,6 +72,7 @@ namespace Intel.RealSense.Frames
                 handle.Free();
             }
         }
+
         public void CopyTo(IntPtr ptr)
         {
             //System.Diagnostics.Debug.Assert(ptr != IntPtr.Zero);
@@ -63,7 +92,6 @@ namespace Intel.RealSense.Frames
             try
             {
                 //System.Diagnostics.Debug.Assert((array.Length * Marshal.SizeOf(typeof(T))) == (Stride * Height));
-                NativeMethods.memcpy(handle.AddrOfPinnedObject(), Data, Stride * Height);
                 CopyFrom(handle.AddrOfPinnedObject());
             }
             finally
@@ -71,6 +99,7 @@ namespace Intel.RealSense.Frames
                 handle.Free();
             }
         }
+
         public void CopyFrom(IntPtr ptr)
         {
             //System.Diagnostics.Debug.Assert(ptr != IntPtr.Zero);
@@ -79,11 +108,11 @@ namespace Intel.RealSense.Frames
 
         public override void Release()
         {
-            if (Instance.Handle != IntPtr.Zero)
-                NativeMethods.rs2_release_frame(Instance.Handle);
-
-            Instance = new HandleRef(this, IntPtr.Zero);
-            Pool.Release(this); //Should be reimplemented as Threadsafe Pool.
+            //base.Release();
+            if (m_instance.Handle != IntPtr.Zero)
+                NativeMethods.rs2_release_frame(m_instance.Handle);
+            m_instance = new HandleRef(this, IntPtr.Zero);
+            Pool.Release(this);
         }
     }
 }

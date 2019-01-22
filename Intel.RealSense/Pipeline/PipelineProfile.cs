@@ -1,44 +1,48 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace Intel.RealSense
 {
-    public class SensorList : IDisposable, IEnumerable<Sensor>
+    public class PipelineProfile : IDisposable
     {
-        public int Count => NativeMethods.rs2_get_sensors_count(instance, out var error);
+        HandleRef m_instance;
 
-        public Sensor this[int index]
+        public PipelineProfile(IntPtr p)
+        {
+            m_instance = new HandleRef(this, p);
+        }
+
+        public Device Device
         {
             get
             {
-                var ptr = NativeMethods.rs2_create_sensor(instance, index, out var error);
-                return new Sensor(ptr);
+                object error;
+                var ptr = NativeMethods.rs2_pipeline_profile_get_device(m_instance.Handle, out error);
+                return new Device(ptr);
             }
         }
 
-        private IntPtr instance;
-
-        public SensorList(IntPtr ptr)
+        public StreamProfileList Streams
         {
-            instance = ptr;
-        }
-
-        public IEnumerator<Sensor> GetEnumerator()
-        {
-
-            int sensorCount = NativeMethods.rs2_get_sensors_count(instance, out var error);
-            for (int i = 0; i < sensorCount; i++)
+            get
             {
-                var ptr = NativeMethods.rs2_create_sensor(instance, i, out error);
-                yield return new Sensor(ptr);
+                object error;
+                var ptr = NativeMethods.rs2_pipeline_profile_get_streams(m_instance.Handle, out error);
+                return new StreamProfileList(ptr);
             }
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-            => GetEnumerator();
-
-
+        public StreamProfile GetStream(Stream s, int index = -1)
+        {
+            foreach(var x in Streams)
+            {
+                if (x.Stream == s && (index != -1 ? x.Index == index : true))
+                    return x;
+            }
+            return null;
+        }
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
@@ -54,15 +58,13 @@ namespace Intel.RealSense
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
                 // TODO: set large fields to null.
-                NativeMethods.rs2_delete_sensor_list(instance);
-                instance = IntPtr.Zero;
-
+                Release();
                 disposedValue = true;
             }
         }
 
-        //TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        ~SensorList()
+        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+        ~PipelineProfile()
         {
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
             Dispose(false);
@@ -77,5 +79,12 @@ namespace Intel.RealSense
             GC.SuppressFinalize(this);
         }
         #endregion
+
+        public void Release()
+        {
+            if (m_instance.Handle != IntPtr.Zero)
+                NativeMethods.rs2_delete_pipeline_profile(m_instance.Handle);
+            m_instance = new HandleRef(this, IntPtr.Zero);
+        }
     }
 }

@@ -1,77 +1,83 @@
-﻿using Intel.RealSense.Frames;
-using Intel.RealSense.Profiles;
-using Intel.RealSense.Types;
-using System;
+﻿using System;
+using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 
-namespace Intel.RealSense.Processing
+namespace Intel.RealSense
 {
     public struct FrameSource
     {
-        internal readonly HandleRef Instance;
+        internal readonly HandleRef m_instance;
 
         internal FrameSource(HandleRef instance)
         {
-            Instance = instance;
+            m_instance = instance;
         }
 
-        public T AllocateVideoFrame<T>(StreamProfile profile, Frame original,
-           int bpp, int width, int height, int stride, Extension extension = Extension.VideoFrame) where T : Frame
+        public T AllocateVideoFrame<T>(StreamProfile profile, Frame original, 
+            int bpp, int width, int height, int stride, Extension extension = Extension.VideoFrame) where T : Frame
         {
-            var fref = NativeMethods.rs2_allocate_synthetic_video_frame(Instance.Handle, profile.Instance.Handle, original.Instance.Handle, bpp, width, height, stride, extension, out var error);
+            object error;
+            var fref = NativeMethods.rs2_allocate_synthetic_video_frame(m_instance.Handle, profile.m_instance.Handle, original.m_instance.Handle, bpp, width, height, stride, extension, out error);
             return Frame.CreateFrame(fref) as T;
         }
 
         [Obsolete("This method is obsolete. Use AllocateCompositeFrame with DisposeWith method instead")]
         public FrameSet AllocateCompositeFrame(FramesReleaser releaser, params Frame[] frames)
-            => AllocateCompositeFrame((IList<Frame>)frames).DisposeWith(releaser);
+        {
+            return AllocateCompositeFrame((IList<Frame>)frames).DisposeWith(releaser);
+        }
 
         public FrameSet AllocateCompositeFrame(params Frame[] frames)
-            => AllocateCompositeFrame((IList<Frame>)frames);
+        {
+            return AllocateCompositeFrame((IList<Frame>)frames);
+        }
+
 
         public FrameSet AllocateCompositeFrame(IList<Frame> frames)
         {
             if (frames == null)
                 throw new ArgumentNullException(nameof(frames));
 
-            IntPtr frameRefs = IntPtr.Zero;
+            IntPtr frame_refs = IntPtr.Zero;
 
-            try
-            {
+            try {
                 object error;
                 int fl = frames.Count;
-                frameRefs = Marshal.AllocHGlobal(fl * IntPtr.Size);
+                frame_refs = Marshal.AllocHGlobal(fl * IntPtr.Size);
                 for (int i = 0; i < fl; i++)
                 {
-                    var fr = frames[i].Instance.Handle;
-                    Marshal.WriteIntPtr(frameRefs, i * IntPtr.Size, fr);
+                    var fr = frames[i].m_instance.Handle;
+                    Marshal.WriteIntPtr(frame_refs, i * IntPtr.Size, fr);
                     NativeMethods.rs2_frame_add_ref(fr, out error);
                 }
 
-                var frame_ref = NativeMethods.rs2_allocate_composite_frame(Instance.Handle, frameRefs, fl, out error);
+                var frame_ref = NativeMethods.rs2_allocate_composite_frame(m_instance.Handle, frame_refs, fl, out error);
                 return FrameSet.Pool.Get(frame_ref);
             }
             finally
             {
-                if (frameRefs != IntPtr.Zero)
-                    Marshal.FreeHGlobal(frameRefs);
+                if (frame_refs != IntPtr.Zero)
+                    Marshal.FreeHGlobal(frame_refs);
             }
         }
 
-        public void FrameReady(IntPtr ptr)
+        private void FrameReady(IntPtr ptr)
         {
-            NativeMethods.rs2_frame_add_ref(ptr, out var error);
-            NativeMethods.rs2_synthetic_frame_ready(Instance.Handle, ptr, out error);
+            object error;
+            NativeMethods.rs2_frame_add_ref(ptr, out error);
+            NativeMethods.rs2_synthetic_frame_ready(m_instance.Handle, ptr, out error);
         }
-        public void FrameReady(Frame frame) 
-            => FrameReady(frame.Instance.Handle);
 
-        public void FramesReady(FrameSet frameSet)
+        public void FrameReady(Frame f)
         {
-            using (frameSet)
-                FrameReady(frameSet.Instance.Handle);
+            FrameReady(f.m_instance.Handle);
+        }
+
+        public void FramesReady(FrameSet fs)
+        {
+            using (fs)
+                FrameReady(fs.m_instance.Handle);
         }
     }
 }

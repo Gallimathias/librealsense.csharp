@@ -1,31 +1,41 @@
-﻿using System;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense.Devices
+namespace Intel.RealSense
 {
     public class RecordDevice : Device
     {
+        readonly IntPtr m_dev;
+
+        public RecordDevice(Device dev, string file) : base(IntPtr.Zero)
+        {
+            m_dev = dev.m_instance;
+            object error;
+            m_instance = NativeMethods.rs2_create_record_device(m_dev, file, out error);
+        }
+
+        public void Pause()
+        {
+            object error;
+            NativeMethods.rs2_record_device_pause(m_instance, out error);
+        }
+
+        public void Resume()
+        {
+            object error;
+            NativeMethods.rs2_record_device_resume(m_instance, out error);
+        }
+
         public string Filename
         {
             get
             {
-                var p = NativeMethods.rs2_record_device_filename(Instance, out var error);
+                object error;
+                var p = NativeMethods.rs2_record_device_filename(m_instance, out error);
                 return Marshal.PtrToStringAnsi(p);
             }
         }
-
-        private readonly IntPtr dev;
-
-        public RecordDevice(Device dev, string file) : base(IntPtr.Zero)
-        {
-            this.dev = dev.Instance;
-            Instance = NativeMethods.rs2_create_record_device(this.dev, file, out var error);
-        }
-
-        public void Pause()
-            => NativeMethods.rs2_record_device_pause(Instance, out var error);
-
-        public void Resume()
-            => NativeMethods.rs2_record_device_resume(Instance, out var error);
     }
 }

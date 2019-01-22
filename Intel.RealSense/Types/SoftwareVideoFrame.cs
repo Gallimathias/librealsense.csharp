@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Text;
 
-namespace Intel.RealSense.Types
+namespace Intel.RealSense
 {
-    [Serializable]
+    [System.Serializable]
     [StructLayout(LayoutKind.Sequential)]
     public class SoftwareVideoFrame
     {

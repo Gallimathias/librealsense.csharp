@@ -2,7 +2,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Pipelines
 {
     public class Config : IDisposable
     {

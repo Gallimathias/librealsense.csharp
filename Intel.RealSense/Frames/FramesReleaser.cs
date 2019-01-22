@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Frames
 {
     public class FramesReleaser : ICompositeDisposable
     {

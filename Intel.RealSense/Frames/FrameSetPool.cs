@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Frames
 {
     public class FrameSetPool
     {

@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Frames
 {
     public static class FrameExtension
     {

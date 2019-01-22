@@ -6,7 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Frames
 {
     public class FrameQueue : IDisposable, IEnumerable<Frame>
     {

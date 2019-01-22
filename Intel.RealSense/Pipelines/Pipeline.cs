@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Pipelines
 {
     public class Pipeline : IDisposable, IEnumerable<Frame>
     {

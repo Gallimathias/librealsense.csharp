@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Frames
 {
     public class FrameSet : ICompositeDisposable, IEnumerable<Frame>
     {

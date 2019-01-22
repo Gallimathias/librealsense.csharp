@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Sensors
 {
     public class SensorList : IDisposable, IEnumerable<Sensor>
     {

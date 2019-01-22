@@ -1,5 +1,5 @@
 ﻿using Intel.RealSense.Frames;
-using Intel.RealSense.Profiles;
+using Intel.RealSense.StreamProfiles;
 using Intel.RealSense.Types;
 using System;
 using System.Collections;
@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Sensors
 {
     public class Sensor : IOptions, IDisposable
     {

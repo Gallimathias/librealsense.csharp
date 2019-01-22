@@ -4,6 +4,8 @@ using Intel.RealSense.Types;
 using System;
 using System.Runtime.InteropServices;
 using System.Security;
+using static Intel.RealSense.Processing.CustomProcessingBlock;
+using static Intel.RealSense.Sensors.Sensor;
 
 namespace Intel.RealSense
 {
@@ -746,14 +748,14 @@ namespace Intel.RealSense
 
         [DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr rs2_pipeline_start_with_callback(IntPtr pipe,
-            [MarshalAs(UnmanagedType.FunctionPtr)] frame_callback on_frame,
+            [MarshalAs(UnmanagedType.FunctionPtr)] Processing.CustomProcessingBlock.FrameCallback on_frame,
             IntPtr user, [MarshalAs(UnmanagedType.CustomMarshaler,
             MarshalTypeRef = typeof(Helpers.ErrorMarshaler))] out object error);
 
 
         [DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr rs2_pipeline_start_with_config_and_callback(IntPtr pipe, IntPtr config,
-            [MarshalAs(UnmanagedType.FunctionPtr)] frame_callback on_frame,
+            [MarshalAs(UnmanagedType.FunctionPtr)] Processing.CustomProcessingBlock.FrameCallback on_frame,
             IntPtr user, [MarshalAs(UnmanagedType.CustomMarshaler,
             MarshalTypeRef = typeof(Helpers.ErrorMarshaler))] out object error);
 

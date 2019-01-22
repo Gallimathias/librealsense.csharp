@@ -33,6 +33,15 @@ namespace Intel.RealSense.Sensors
            => new StreamProfileList(NativeMethods.rs2_get_stream_profiles(instance, out var error));
         public IEnumerable<VideoStreamProfile> VideoStreamProfiles
             => StreamProfiles.OfType<VideoStreamProfile>();
+        public AutoExposureROI AutoExposureSettings  { get
+            {
+                if (NativeMethods.rs2_is_sensor_extendable_to(instance, Extension.Roi, out var error) > 0)
+                {
+                    return new AutoExposureROI(instance);
+                }
+                return null;
+            }        
+        }
 
         //public delegate void FrameCallback<Frame, T>(Frame frame, T user_data);
         public delegate void FrameCallback(Frame frame);

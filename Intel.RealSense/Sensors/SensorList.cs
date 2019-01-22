@@ -1,57 +1,44 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Linq;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Sensors
 {
     public class SensorList : IDisposable, IEnumerable<Sensor>
     {
-        IntPtr m_instance;
-
-        public SensorList(IntPtr ptr)
-        {
-            m_instance = ptr;
-        }
-
-
-        public IEnumerator<Sensor> GetEnumerator()
-        {
-            object error;
-
-            int sensorCount = NativeMethods.rs2_get_sensors_count(m_instance, out error);
-            for (int i = 0; i < sensorCount; i++)
-            {
-                var ptr = NativeMethods.rs2_create_sensor(m_instance, i, out error);
-                yield return new Sensor(ptr);
-            }
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        public int Count
-        {
-            get
-            {
-                object error;
-                int deviceCount = NativeMethods.rs2_get_sensors_count(m_instance, out error);
-                return deviceCount;
-            }
-        }
+        public int Count => NativeMethods.rs2_get_sensors_count(instance, out var error);
 
         public Sensor this[int index]
         {
             get
             {
-                object error;
-                var ptr = NativeMethods.rs2_create_sensor(m_instance, index, out error);
+                var ptr = NativeMethods.rs2_create_sensor(instance, index, out var error);
                 return new Sensor(ptr);
             }
         }
+
+        private IntPtr instance;
+
+        public SensorList(IntPtr ptr)
+        {
+            instance = ptr;
+        }
+
+        public IEnumerator<Sensor> GetEnumerator()
+        {
+
+            int sensorCount = NativeMethods.rs2_get_sensors_count(instance, out var error);
+            for (int i = 0; i < sensorCount; i++)
+            {
+                var ptr = NativeMethods.rs2_create_sensor(instance, i, out error);
+                yield return new Sensor(ptr);
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+            => GetEnumerator();
+
+
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
@@ -67,8 +54,8 @@ namespace Intel.RealSense
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
                 // TODO: set large fields to null.
-                NativeMethods.rs2_delete_sensor_list(m_instance);
-                m_instance = IntPtr.Zero;
+                NativeMethods.rs2_delete_sensor_list(instance);
+                instance = IntPtr.Zero;
 
                 disposedValue = true;
             }

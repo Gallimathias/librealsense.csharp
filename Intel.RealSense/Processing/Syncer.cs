@@ -1,43 +1,36 @@
-﻿using System;
+﻿using Intel.RealSense.Frames;
+using System;
 using System.Runtime.InteropServices;
-using System.Collections.Generic;
-using System.Linq;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Processing
 {
     public class Syncer : ProcessingBlock
     {
         public Syncer()
         {
-            object error;
-            m_instance = new HandleRef(this, NativeMethods.rs2_create_sync_processing_block(out error));
-            NativeMethods.rs2_start_processing_queue(m_instance.Handle, queue.m_instance.Handle, out error);
+            Instance = new HandleRef(this, NativeMethods.rs2_create_sync_processing_block(out var error));
+            NativeMethods.rs2_start_processing_queue(Instance.Handle, queue.Instance.Handle, out error);
         }
 
-        public void SubmitFrame(Frame f)
+        public void SubmitFrame(Frame frame)
         {
-            object error;
-            NativeMethods.rs2_frame_add_ref(f.m_instance.Handle, out error);
-            NativeMethods.rs2_process_frame(m_instance.Handle, f.m_instance.Handle, out error);
+            NativeMethods.rs2_frame_add_ref(frame.Instance.Handle, out var error);
+            NativeMethods.rs2_process_frame(Instance.Handle, frame.Instance.Handle, out error);
         }
 
-        public FrameSet WaitForFrames(uint timeout_ms = 5000)
-        {
-            object error;
-            var ptr = NativeMethods.rs2_wait_for_frame(queue.m_instance.Handle, timeout_ms, out error);
-            return FrameSet.Pool.Get(ptr);
-        }
+        public FrameSet WaitForFrames(uint timeoutMs = 5000) 
+            => FrameSet.Pool.Get(NativeMethods.rs2_wait_for_frame(queue.Instance.Handle, timeoutMs, out var error));
 
         public bool PollForFrames(out FrameSet result)
         {
-            object error;
-            IntPtr ptr;
-            if (NativeMethods.rs2_poll_for_frame(queue.m_instance.Handle, out ptr, out error) > 0)
+            result = null;
+
+            if (NativeMethods.rs2_poll_for_frame(queue.Instance.Handle, out IntPtr ptr, out var error) > 0)
             {
                 result = FrameSet.Pool.Get(ptr);
                 return true;
             }
-            result = null;
+
             return false;
         }
     }

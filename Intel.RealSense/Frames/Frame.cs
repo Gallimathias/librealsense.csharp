@@ -1,36 +1,80 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Intel.RealSense.Profiles;
+using Intel.RealSense.Types;
+using System;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Frames
 {
     public class Frame : IDisposable
     {
-        internal HandleRef m_instance;
-        public static readonly FramePool<Frame> Pool = new FramePool<Frame>(ptr => new Frame(ptr));
+        internal static readonly FramePool<Frame> Pool; //TODO: Should be reimplemented as Threadsafe Pool.
 
-        public IntPtr NativePtr { get { return m_instance.Handle; } }
+        static Frame()
+        {
+            Pool = new FramePool<Frame>(ptr => new Frame(ptr));
+        }
+
+        public bool IsComposite => NativeMethods.rs2_is_frame_extendable_to(Instance.Handle, Extension.CompositeFrame, out var error) > 0;
+        public IntPtr Data => NativeMethods.rs2_get_frame_data(Instance.Handle, out var error);
+        public StreamProfile Profile => StreamProfile.Pool.Get(NativeMethods.rs2_get_frame_stream_profile(Instance.Handle, out var error));
+        public ulong Number
+        {
+            get
+            {
+                var frameNumber = NativeMethods.rs2_get_frame_number(Instance.Handle, out var error);
+                return frameNumber;
+            }
+        }
+        public double Timestamp => NativeMethods.rs2_get_frame_timestamp(Instance.Handle, out var error);
+        public TimestampDomain TimestampDomain => NativeMethods.rs2_get_frame_timestamp_domain(Instance.Handle, out var error);
+
+        public IntPtr NativePtr => Instance.Handle; //TODO: Native pointers should not be visible
+
+        internal HandleRef Instance;
 
         public Frame(IntPtr ptr)
         {
-            m_instance = new HandleRef(this, ptr);
+            Instance = new HandleRef(this, ptr);
+        }
+
+        public virtual void Release()
+        {
+            if (Instance.Handle != IntPtr.Zero)
+                NativeMethods.rs2_release_frame(Instance.Handle);
+
+            Instance = new HandleRef(this, IntPtr.Zero);
+            Pool.Release(this);
+        }
+
+        public Frame Clone()
+        {
+            NativeMethods.rs2_frame_add_ref(Instance.Handle, out var error);
+            return CreateFrame(Instance.Handle);
         }
 
         internal static Frame CreateFrame(IntPtr ptr)
         {
-            object error;
-            if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.Points, out error) > 0)
-                return Points.Pool.Get(ptr);
+            if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.Points, out var error) > 0)
+                return Pool.Get(ptr);
             else if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.DepthFrame, out error) > 0)
-                return DepthFrame.Pool.Get(ptr);
+                return Pool.Get(ptr);
             else if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.VideoFrame, out error) > 0)
-                return VideoFrame.Pool.Get(ptr);
+                return Pool.Get(ptr);
             else
-                return Frame.Pool.Get(ptr);
+                return Pool.Get(ptr);
         }
 
         #region IDisposable Support
-        internal bool disposedValue = false; // To detect redundant calls
+        internal bool disposedValue = false; // To detect redundant calls TODO: internal dispose control should never be externally influenced
+
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            // TODO: uncomment the following line if the finalizer is overridden above.
+            GC.SuppressFinalize(this);
+        }
 
         protected virtual void Dispose(bool disposing)
         {
@@ -54,88 +98,6 @@ namespace Intel.RealSense
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
             Dispose(false);
         }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            GC.SuppressFinalize(this);
-        }
         #endregion
-
-        public virtual void Release()
-        {
-            if (m_instance.Handle != IntPtr.Zero)
-                NativeMethods.rs2_release_frame(m_instance.Handle);
-            m_instance = new HandleRef(this, IntPtr.Zero);
-            Pool.Release(this);
-        }
-
-        public Frame Clone()
-        {
-            object error;
-            NativeMethods.rs2_frame_add_ref(m_instance.Handle, out error);
-            return CreateFrame(m_instance.Handle);
-        }
-
-        public bool IsComposite
-        {
-            get
-            {
-                object error;
-                return NativeMethods.rs2_is_frame_extendable_to(m_instance.Handle, Extension.CompositeFrame, out error) > 0;
-            }
-        }
-
-        public IntPtr Data
-        {
-            get
-            {
-                object error;
-                return NativeMethods.rs2_get_frame_data(m_instance.Handle, out error);
-            }
-        }
-
-        public StreamProfile Profile
-        {
-            get
-            {
-                object error;
-                return StreamProfile.Pool.Get(NativeMethods.rs2_get_frame_stream_profile(m_instance.Handle, out error));
-            }
-        }
-
-        public ulong Number
-        {
-            get
-            {
-                object error;
-                var frameNumber = NativeMethods.rs2_get_frame_number(m_instance.Handle, out error);
-                return frameNumber;
-            }
-        }
-
-        public double Timestamp
-        {
-            get
-            {
-                object error;
-                var timestamp = NativeMethods.rs2_get_frame_timestamp(m_instance.Handle, out error);
-                return timestamp;
-            }
-        }
-
-
-        public TimestampDomain TimestampDomain
-        {
-            get
-            {
-                object error;
-                var timestampDomain = NativeMethods.rs2_get_frame_timestamp_domain(m_instance.Handle, out error);
-                return timestampDomain;
-            }
-        }
     }
 }

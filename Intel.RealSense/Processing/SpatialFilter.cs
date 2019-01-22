@@ -1,23 +1,19 @@
-﻿using System;
+﻿using Intel.RealSense.Frames;
+using System;
 using System.Runtime.InteropServices;
-using System.Collections.Generic;
-using System.Linq;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Processing
 {
     public class SpatialFilter : ProcessingBlock
     {
         public SpatialFilter()
         {
-            object error;
-            m_instance = new HandleRef(this, NativeMethods.rs2_create_spatial_filter_block(out error));
-            NativeMethods.rs2_start_processing_queue(m_instance.Handle, queue.m_instance.Handle, out error);
+            Instance = new HandleRef(this, NativeMethods.rs2_create_spatial_filter_block(out var error));
+            NativeMethods.rs2_start_processing_queue(Instance.Handle, queue.Instance.Handle, out error);
         }
 
         [Obsolete("This method is obsolete. Use Process method instead")]
-        public VideoFrame ApplyFilter(Frame original, FramesReleaser releaser = null)
-        {
-            return Process(original).DisposeWith(releaser) as VideoFrame;
-        }
+        public VideoFrame ApplyFilter(VideoFrame original, FramesReleaser releaser = null)
+            => Process(original).DisposeWith(releaser) as VideoFrame;
     }
 }

@@ -1,55 +1,64 @@
-﻿using System;
+﻿using Intel.RealSense.Frames;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Frames
 {
     public class FrameQueue : IDisposable, IEnumerable<Frame>
     {
-        internal HandleRef m_instance;
+        internal HandleRef Instance;
 
         public FrameQueue(int capacity = 1)
         {
-            object error;
-            m_instance = new HandleRef(this, NativeMethods.rs2_create_frame_queue(capacity, out error));
+            Instance = new HandleRef(this, NativeMethods.rs2_create_frame_queue(capacity, out var error));
         }
 
         public bool PollForFrame(out Frame frame)
         {
-            object error;
-            IntPtr ptr;
-            if (NativeMethods.rs2_poll_for_frame(m_instance.Handle, out ptr, out error) > 0)
+            frame = null;
+
+            if (NativeMethods.rs2_poll_for_frame(Instance.Handle, out IntPtr ptr, out var error) > 0)
             {
                 frame = Frame.CreateFrame(ptr);
                 return true;
             }
-            frame = null;
+            
             return false;
         }
 
-        public Frame WaitForFrame(uint timeout_ms = 5000)
+        public Frame WaitForFrame(uint timeoutMs = 5000)
         {
-            object error;
-            var ptr = NativeMethods.rs2_wait_for_frame(m_instance.Handle, timeout_ms, out error);
+            var ptr = NativeMethods.rs2_wait_for_frame(Instance.Handle, timeoutMs, out var error);
             return Frame.CreateFrame(ptr);
         }
 
-        public FrameSet WaitForFrames(uint timeout_ms = 5000)
+        public FrameSet WaitForFrames(uint timeoutMs = 5000)
         {
-            object error;
-            var ptr = NativeMethods.rs2_wait_for_frame(m_instance.Handle, timeout_ms, out error);
+            var ptr = NativeMethods.rs2_wait_for_frame(Instance.Handle, timeoutMs, out var error);
             return FrameSet.Pool.Get(ptr);
         }
 
         public void Enqueue(Frame f)
         {
-            object error;
-            NativeMethods.rs2_frame_add_ref(f.m_instance.Handle, out error);
-            NativeMethods.rs2_enqueue_frame(f.m_instance.Handle, m_instance.Handle);
+            NativeMethods.rs2_frame_add_ref(f.Instance.Handle, out var error);
+            NativeMethods.rs2_enqueue_frame(f.Instance.Handle, Instance.Handle);
         }
+
+        public IEnumerator<Frame> GetEnumerator()
+        {
+            while (PollForFrame(out Frame frame))
+            {
+                yield return frame;
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() 
+            => GetEnumerator();
+
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
 
@@ -64,17 +73,10 @@ namespace Intel.RealSense
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
                 // TODO: set large fields to null.
-                NativeMethods.rs2_delete_frame_queue(m_instance.Handle);
+                NativeMethods.rs2_delete_frame_queue(Instance.Handle);
 
                 disposedValue = true;
             }
-        }
-
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        ~FrameQueue()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(false);
         }
 
         // This code added to correctly implement the disposable pattern.
@@ -86,19 +88,17 @@ namespace Intel.RealSense
             GC.SuppressFinalize(this);
         }
 
-        public IEnumerator<Frame> GetEnumerator()
+        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+        ~FrameQueue()
         {
-            Frame frame;
-            while (PollForFrame(out frame))
-            {
-                yield return frame;
-            }
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(false);
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        
+        
+
+      
         #endregion
     }
 }

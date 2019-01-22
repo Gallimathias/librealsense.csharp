@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-
-namespace Intel.RealSense
+﻿namespace Intel.RealSense.Types
 {
     public enum Stream
     {
@@ -15,6 +11,6 @@ namespace Intel.RealSense
         Accel = 6,
         Gpio = 7,
         Pose = 8,
-        Confidence = 9,
+        Confidence = 9
     }
 }

@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Types
 {
     /// <summary>
     /// Video stream intrinsics
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     [StructLayout(LayoutKind.Sequential)]
     public struct Intrinsics
     {
@@ -22,18 +21,8 @@ namespace Intel.RealSense
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 5)]
         public float[] coeffs; /** Distortion coefficients */
 
-        public override string ToString()
-        {
-            return String.Format("(width:{0}, height:{1}, ppx:{2}, ppy:{3}, fx:{4}, fy:{5}, model:{6}, coeffs:[{7}])",
-                width,
-                height,
-                ppx,
-                ppy,
-                fx,
-                fy,
-                model,
-                String.Join(", ", Array.ConvertAll(coeffs, Convert.ToString))
-            );
-        }
+        public override string ToString() 
+            => $"(width:{width}, height:{height}, ppx:{ppx}, ppy:{ppy}, fx:{fx}, fy:{fy}, model:{model}, " +
+            $"coeffs:[{string.Join(", ", Array.ConvertAll(coeffs, Convert.ToString))}])";
     }
 }

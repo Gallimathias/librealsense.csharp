@@ -1,41 +1,33 @@
-﻿using System;
+﻿using Intel.RealSense.Frames;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using System.Text;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Frames
 {
     public class FrameEnumerator : IEnumerator<Frame>
     {
-        private readonly FrameSet fs;
-        private Frame current;
-        private int index;
-
-        public FrameEnumerator(FrameSet fs)
-        {
-            this.fs = fs;
-            index = 0;
-            current = default(Frame);
-        }
-
-        public Frame Current
-        {
-            get
-            {
-                return current;
-            }
-        }
-
+        public Frame Current { get; private set; }
         object IEnumerator.Current
         {
             get
             {
-                if (index == 0 || index == fs.m_count + 1)
-                {
+                if (index == 0 || index == frameSet.Count + 1)
                     throw new InvalidOperationException();
-                }
+
                 return Current;
             }
+        }        
+
+        private readonly FrameSet frameSet;
+        private int index;
+
+        public FrameEnumerator(FrameSet frameSet)
+        {
+            this.frameSet = frameSet;
+            index = 0;
+            Current = default(Frame);
         }
 
         public void Dispose()
@@ -45,23 +37,23 @@ namespace Intel.RealSense
 
         public bool MoveNext()
         {
-            if ((uint)index < (uint)fs.m_count)
+            if ((uint)index < (uint)frameSet.Count)
             {
-                object error;
-                var ptr = NativeMethods.rs2_extract_frame(fs.m_instance.Handle, index, out error);
-                current = Frame.CreateFrame(ptr);
+                var ptr = NativeMethods.rs2_extract_frame(frameSet.Instance.Handle, index, out var error);
+                Current = Frame.CreateFrame(ptr);
                 index++;
                 return true;
             }
-            index = fs.m_count + 1;
-            current = null;
+
+            index = frameSet.Count + 1;
+            Current = null;
             return false;
         }
 
         public void Reset()
         {
             index = 0;
-            current = null;
+            Current = null;
         }
     }
 }

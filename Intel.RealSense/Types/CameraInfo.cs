@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-
-namespace Intel.RealSense
+﻿namespace Intel.RealSense.Types
 {
     public enum CameraInfo
     {
@@ -15,6 +11,6 @@ namespace Intel.RealSense
         AdvancedMode = 6,
         ProductId = 7,
         CameraLocked = 8,
-        UsbTypeDescriptor = 9,
+        UsbTypeDescriptor = 9
     }
 }

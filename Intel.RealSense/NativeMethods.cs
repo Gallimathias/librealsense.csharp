@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Intel.RealSense.Devices;
+using Intel.RealSense.Frames;
+using Intel.RealSense.Types;
+using System;
 using System.Runtime.InteropServices;
 using System.Security;
 
@@ -11,12 +14,11 @@ namespace Intel.RealSense
 
         [DllImport("msvcrt.dll", EntryPoint = "memcpy", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
         internal static extern IntPtr memcpy(IntPtr dest, IntPtr src, int count);
-
+        
         #region rs_record_playback
         [DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr rs2_create_record_device(IntPtr device, [MarshalAs(UnmanagedType.LPStr)] string file, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Helpers.ErrorMarshaler))] out object error);
-
-
+        
         [DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void rs2_record_device_pause(IntPtr device, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Helpers.ErrorMarshaler))] out object error);
 
@@ -27,8 +29,7 @@ namespace Intel.RealSense
 
         [DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr rs2_record_device_filename(IntPtr device, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Helpers.ErrorMarshaler))] out object error);
-
-
+        
         [DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr rs2_create_playback_device([MarshalAs(UnmanagedType.LPStr)] string file, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Helpers.ErrorMarshaler))] out object error);
 
@@ -96,11 +97,10 @@ namespace Intel.RealSense
 
 
         [DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr rs2_create_processing_block_fptr([MarshalAs(UnmanagedType.FunctionPtr)] frame_processor_callback on_frame, IntPtr user, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Helpers.ErrorMarshaler))] out object error);
-
+        internal static extern IntPtr rs2_create_processing_block_fptr([MarshalAs(UnmanagedType.FunctionPtr)] FrameProcessorCallbackHandler on_frame, IntPtr user, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Helpers.ErrorMarshaler))] out object error);
 
         [DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void rs2_start_processing_fptr(IntPtr block, [MarshalAs(UnmanagedType.FunctionPtr)] frame_callback on_frame, IntPtr user, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Helpers.ErrorMarshaler))] out object error);
+        internal static extern void rs2_start_processing_fptr(IntPtr block, [MarshalAs(UnmanagedType.FunctionPtr)] FrameCallbackHandler on_frame, IntPtr user, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Helpers.ErrorMarshaler))] out object error);
 
 
         [DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
@@ -345,7 +345,7 @@ namespace Intel.RealSense
 
 
         [DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void rs2_start(IntPtr sensor, [MarshalAs(UnmanagedType.FunctionPtr)] frame_callback on_frame, IntPtr user, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Helpers.ErrorMarshaler))] out object error);
+        internal static extern void rs2_start(IntPtr sensor, [MarshalAs(UnmanagedType.FunctionPtr)] FrameCallbackHandler on_frame, IntPtr user, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Helpers.ErrorMarshaler))] out object error);
 
 
         [DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
@@ -357,7 +357,7 @@ namespace Intel.RealSense
 
 
         [DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void rs2_set_notifications_callback(IntPtr sensor, [MarshalAs(UnmanagedType.FunctionPtr)] frame_callback on_notification, IntPtr user, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Helpers.ErrorMarshaler))] out object error);
+        internal static extern void rs2_set_notifications_callback(IntPtr sensor, [MarshalAs(UnmanagedType.FunctionPtr)] FrameCallbackHandler on_notification, IntPtr user, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Helpers.ErrorMarshaler))] out object error);
 
 
         [DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
@@ -756,7 +756,6 @@ namespace Intel.RealSense
             [MarshalAs(UnmanagedType.FunctionPtr)] frame_callback on_frame,
             IntPtr user, [MarshalAs(UnmanagedType.CustomMarshaler,
             MarshalTypeRef = typeof(Helpers.ErrorMarshaler))] out object error);
-
 
         [DllImport(dllName, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr rs2_pipeline_get_active_profile(IntPtr pipe, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(Helpers.ErrorMarshaler))] out object error);

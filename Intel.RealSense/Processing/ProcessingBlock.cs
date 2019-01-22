@@ -1,33 +1,61 @@
-﻿using System;
+﻿using Intel.RealSense.Frames;
+using System;
 using System.Runtime.InteropServices;
-using System.Collections.Generic;
-using System.Linq;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Processing
 {
-    public interface IProcessingBlock : IOptions
-    {
-        Frame Process(Frame original);
-        FrameSet Process(FrameSet original);
-    }
-
     public abstract class ProcessingBlock : IProcessingBlock, IDisposable
     {
-        public readonly FrameQueue queue = new FrameQueue(1);
+        public IOptionsContainer Options => options = options ?? new Sensor.SensorOptions(Instance.Handle);
+        
+        internal HandleRef Instance;
 
-        internal HandleRef m_instance;
+        protected readonly FrameQueue queue;
 
-        Sensor.SensorOptions m_options;
-        public IOptionsContainer Options
+        private Sensor.SensorOptions options;
+
+        public ProcessingBlock()
         {
-            get
-            {
-                return m_options = m_options ?? new Sensor.SensorOptions(m_instance.Handle);
-            }
+            queue = new FrameQueue(1);            
+        }
+
+        /// <summary>
+        /// Process frame and return the result
+        /// </summary>
+        /// <param name="original"></param>
+        /// <returns></returns>
+        public Frame Process(Frame original)
+        {
+            NativeMethods.rs2_frame_add_ref(original.Instance.Handle, out var error);
+            NativeMethods.rs2_process_frame(Instance.Handle, original.Instance.Handle, out error);
+
+            if (queue.PollForFrame(out Frame f))
+                return f;
+
+            return original;
+        }
+        public FrameSet Process(FrameSet original)
+        {
+            FrameSet rv;
+
+            using (var singleOriginal = original.AsFrame())
+            using (var processed = Process(singleOriginal))
+                rv = FrameSet.FromFrame(processed);
+
+            return rv;
         }
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
+
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            // TODO: uncomment the following line if the finalizer is overridden above.
+            GC.SuppressFinalize(this);
+        }
 
         protected virtual void Dispose(bool disposing)
         {
@@ -51,66 +79,14 @@ namespace Intel.RealSense
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
             Dispose(false);
         }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            GC.SuppressFinalize(this);
-        }
         #endregion
 
         public void Release()
         {
-            if (m_instance.Handle != IntPtr.Zero)
-                NativeMethods.rs2_delete_processing_block(m_instance.Handle);
-            m_instance = new HandleRef(this, IntPtr.Zero);
-        }
+            if (Instance.Handle != IntPtr.Zero)
+                NativeMethods.rs2_delete_processing_block(Instance.Handle);
 
-        /// <summary>
-        /// Process frame and return the result
-        /// </summary>
-        /// <param name="original"></param>
-        /// <returns></returns>
-        public Frame Process(Frame original)
-        {
-            object error;
-            NativeMethods.rs2_frame_add_ref(original.m_instance.Handle, out error);
-            NativeMethods.rs2_process_frame(m_instance.Handle, original.m_instance.Handle, out error);
-            Frame f;
-            if (queue.PollForFrame(out f))
-            {
-                return f;
-            }
-            return original;
-        }
-
-        public FrameSet Process(FrameSet original)
-        {
-            FrameSet rv;
-            using (var singleOriginal = original.AsFrame())
-            {
-                using (var processed = Process(singleOriginal))
-                {
-                    rv = FrameSet.FromFrame(processed);
-                }
-            }
-            return rv;
-        }
-    }
-
-    public static class IProcessingBlockExtensions
-    {
-        public static Frame ApplyFilter(this Frame frame, IProcessingBlock block)
-        {
-            return block.Process(frame);
-        }
-
-        public static FrameSet ApplyFilter(this FrameSet frames, IProcessingBlock block)
-        {
-            return block.Process(frames);
+            Instance = new HandleRef(this, IntPtr.Zero);
         }
     }
 }

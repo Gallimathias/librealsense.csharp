@@ -1,51 +1,47 @@
-﻿using System;
-using System.Collections;
+﻿using Intel.RealSense.Types;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.StreamProfiles
 {
-    public class ProfilePool<T> where T : StreamProfile
+    internal class ProfilePool<T> where T : StreamProfile
     {
-        readonly Stack<T> stack = new Stack<T>();
-        readonly object locker = new object();
+        private readonly ConcurrentStack<T> stack;
+
+        public ProfilePool()
+        {
+            stack = new ConcurrentStack<T>();
+        }
 
         public T Get(IntPtr ptr)
         {
+            bool isVideo = NativeMethods.rs2_stream_profile_is(ptr, Extension.VideoProfile, out var error) > 0;
 
-            object error;
-            bool isVideo = NativeMethods.rs2_stream_profile_is(ptr, Extension.VideoProfile, out error) > 0;
+            if (!stack.TryPop(out T profile))
+                profile = (isVideo ? new VideoStreamProfile(ptr) : new StreamProfile(ptr)) as T;
 
-            T p;
-            lock (locker)
+
+            profile.Instance = new HandleRef(profile, ptr);
+            profile.disposedValue = false;
+
+            NativeMethods.rs2_get_stream_profile_data(ptr, out profile.stream, out profile.format, out profile.index, out profile.uniqueID, out profile.framerate, out error);
+
+            if (isVideo)
             {
-                if (stack.Count != 0)
-                    p = stack.Pop();
-                else
-                    p = (isVideo  ? new VideoStreamProfile(ptr) : new StreamProfile(ptr)) as T;
-            }
-
-            p.m_instance = new HandleRef(p, ptr);
-            p.disposedValue = false;
-
-            NativeMethods.rs2_get_stream_profile_data(ptr, out p._stream, out p._format, out p._index, out p._uniqueId, out p._framerate, out error);
-
-            if(isVideo)
-            {
-                var v = p as VideoStreamProfile;
+                var v = profile as VideoStreamProfile;
                 NativeMethods.rs2_get_video_stream_resolution(ptr, out v.width, out v.height, out error);
                 return v as T;
             }
 
-            return p;
+            return profile;
         }
 
         public void Release(T t)
         {
-            lock (locker)
-            {
-                stack.Push(t);
-            }
+            stack.Push(t);
         }
     }
 }

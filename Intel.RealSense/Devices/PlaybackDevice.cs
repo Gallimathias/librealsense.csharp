@@ -1,105 +1,54 @@
+﻿using Intel.RealSense.Types;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Devices
 {
     public class PlaybackDevice : Device
     {
+        public PlaybackStatus Status => NativeMethods.rs2_playback_device_get_current_status(Instance, out var error);
+        public ulong Duration => NativeMethods.rs2_playback_get_duration(Instance, out var error);
+        public ulong Position
+        {
+            get => NativeMethods.rs2_playback_get_position(Instance, out var error);
+            set => NativeMethods.rs2_playback_seek(Instance, (long)value, error: out var error);
+        }
+        public bool Realtime
+        {
+            get => NativeMethods.rs2_playback_device_is_real_time(Instance, out var error) != 0;
+            set => NativeMethods.rs2_playback_device_set_real_time(Instance, value ? 1 : 0, error: out var error);
+        }
+        public float Speed
+        {
+            set => NativeMethods.rs2_playback_device_set_playback_speed(Instance, value, out var error);
+        }
+
         internal PlaybackDevice(IntPtr dev) : base(dev)
         {
 
         }
 
+        public void Pause()
+            => NativeMethods.rs2_playback_device_pause(Instance, out var error);
 
-        protected override void Dispose(bool disposing)
-        {
-            // Intentionally empty, does not own the native device, only wraps it.
-        }
+        public void Resume()
+            => NativeMethods.rs2_playback_device_resume(Instance, out var error);
+
+        public void Seek(long time)
+            => NativeMethods.rs2_playback_seek(Instance, time, out var error);
 
         public static PlaybackDevice FromDevice(Device dev)
         {
-            object error;
-            if (NativeMethods.rs2_is_device_extendable_to(dev.m_instance, Extension.Playback, out error) == 0)
+            if (NativeMethods.rs2_is_device_extendable_to(dev.Instance, Extension.Playback, out var error) == 0)
             {
                 throw new ArgumentException("Device does not support Playback");
             }
 
-            return new PlaybackDevice(dev.m_instance);
+            return new PlaybackDevice(dev.Instance);
         }
 
-        public void Pause()
+        protected override void Dispose(bool disposing)
         {
-            object error;
-            NativeMethods.rs2_playback_device_pause(m_instance, out error);
-        }
-
-        public void Resume()
-        {
-            object error;
-            NativeMethods.rs2_playback_device_resume(m_instance, out error);
-        }
-
-        public PlaybackStatus Status
-        {
-            get
-            {
-                object error;
-                return NativeMethods.rs2_playback_device_get_current_status(m_instance, out error);
-            }
-        }
-
-        public ulong Duration
-        {
-            get
-            {
-                object error;
-                return NativeMethods.rs2_playback_get_duration(m_instance, out error);
-            }
-        }
-
-        public ulong Position
-        {
-            get
-            {
-                object error;
-                return NativeMethods.rs2_playback_get_position(m_instance, out error);
-            }
-            set
-            {
-                object error;
-                NativeMethods.rs2_playback_seek(m_instance, (long)value, out error);
-            }
-        }
-
-        public void Seek(long time)
-        {
-            object error;
-            NativeMethods.rs2_playback_seek(m_instance, time, out error);
-        }
-
-        public bool Realtime
-        {
-            get
-            {
-                object error;
-                return NativeMethods.rs2_playback_device_is_real_time(m_instance, out error) != 0;
-            }
-            set
-            {
-                object error;
-                NativeMethods.rs2_playback_device_set_real_time(m_instance, value ? 1 : 0, out error);
-            }
-        }
-
-        public float Speed
-        {
-            set
-            {
-                object error;
-                NativeMethods.rs2_playback_device_set_playback_speed(m_instance, value, out error);
-            }
+            // Intentionally empty, does not own the native device, only wraps it.
         }
     }
 }

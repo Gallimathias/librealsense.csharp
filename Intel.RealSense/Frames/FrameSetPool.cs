@@ -1,44 +1,40 @@
 ﻿using System;
-using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Frames
 {
     public class FrameSetPool
     {
-        readonly Stack<FrameSet> stack = new Stack<FrameSet>();
-        readonly object locker = new object();
+        private readonly ConcurrentStack<FrameSet> stack;
+
+        public FrameSetPool()
+        {
+            stack = new ConcurrentStack<FrameSet>();
+        }
+
         public FrameSet Get(IntPtr ptr)
         {
-            lock (locker)
+            if (stack.TryPop(out FrameSet frameSet))
             {
-                if (stack.Count != 0)
-                {
-                    FrameSet f = stack.Pop();
-                    f.m_instance = new HandleRef(f, ptr);
-                    f.disposedValue = false;
-                    object error;
-                    f.m_count = NativeMethods.rs2_embedded_frames_count(f.m_instance.Handle, out error);
-                    f.m_enum.Reset();
-                    //f.m_disposable = new EmptyDisposable();
-                    f.disposables.Clear();
-                    return f;
-                }
-                else
-                {
-                    return new FrameSet(ptr);
-                }
+                frameSet.Instance = new HandleRef(frameSet, ptr);
+                frameSet.disposedValue = false;
+                frameSet.Count = NativeMethods.rs2_embedded_frames_count(frameSet.Instance.Handle, out var error);
+                frameSet.enumerator.Reset();
+                frameSet.disposables.Clear();
+                return frameSet;
             }
-
+            else
+            {
+                return new FrameSet(ptr);
+            }
         }
 
         public void Release(FrameSet t)
         {
-            lock (locker)
-            {
-                stack.Push(t);
-            }
+            stack.Push(t);
         }
     }
 }

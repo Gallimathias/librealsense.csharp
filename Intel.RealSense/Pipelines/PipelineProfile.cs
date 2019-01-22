@@ -1,25 +1,18 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using Intel.RealSense.Devices;
+using Intel.RealSense.Profiles;
+using Intel.RealSense.Types;
+using System;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Pipelines
 {
     public class PipelineProfile : IDisposable
     {
-        HandleRef m_instance;
-
-        public PipelineProfile(IntPtr p)
-        {
-            m_instance = new HandleRef(this, p);
-        }
-
         public Device Device
         {
             get
             {
-                object error;
-                var ptr = NativeMethods.rs2_pipeline_profile_get_device(m_instance.Handle, out error);
+                var ptr = NativeMethods.rs2_pipeline_profile_get_device(instance.Handle, out var error);
                 return new Device(ptr);
             }
         }
@@ -28,15 +21,23 @@ namespace Intel.RealSense
         {
             get
             {
-                object error;
-                var ptr = NativeMethods.rs2_pipeline_profile_get_streams(m_instance.Handle, out error);
+                var ptr = NativeMethods.rs2_pipeline_profile_get_streams(instance.Handle, out var error);
                 return new StreamProfileList(ptr);
             }
         }
 
+        private HandleRef instance;
+
+        public PipelineProfile(IntPtr p)
+        {
+            instance = new HandleRef(this, p);
+        }
+
+
+
         public StreamProfile GetStream(Stream s, int index = -1)
         {
-            foreach(var x in Streams)
+            foreach (var x in Streams)
             {
                 if (x.Stream == s && (index != -1 ? x.Index == index : true))
                     return x;
@@ -82,9 +83,9 @@ namespace Intel.RealSense
 
         public void Release()
         {
-            if (m_instance.Handle != IntPtr.Zero)
-                NativeMethods.rs2_delete_pipeline_profile(m_instance.Handle);
-            m_instance = new HandleRef(this, IntPtr.Zero);
+            if (instance.Handle != IntPtr.Zero)
+                NativeMethods.rs2_delete_pipeline_profile(instance.Handle);
+            instance = new HandleRef(this, IntPtr.Zero);
         }
     }
 }

@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-
-namespace Intel.RealSense
+﻿namespace Intel.RealSense.Types
 {
     public enum TimestampDomain
     {
         HardwareClock = 0,
-        SystemTime = 1,
+        SystemTime = 1
     }
 }

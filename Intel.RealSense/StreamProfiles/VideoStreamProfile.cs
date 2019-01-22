@@ -1,31 +1,25 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
+﻿using Intel.RealSense.Types;
+using System;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.StreamProfiles
 {
     public class VideoStreamProfile : StreamProfile
     {
+        public int Width => width;
+        public int Height => height;
+        internal int width;
+        internal int height;
+
         public VideoStreamProfile(IntPtr ptr) : base(ptr)
-        {
-            object error;
-            NativeMethods.rs2_get_video_stream_resolution(ptr, out width, out height, out error);
-        }
+            => NativeMethods.rs2_get_video_stream_resolution(ptr, out width, out height, out var error);
 
         public Intrinsics GetIntrinsics()
         {
-            object error;
-            Intrinsics intrinsics;
-            NativeMethods.rs2_get_video_stream_intrinsics(m_instance.Handle, out intrinsics, out error);
+            NativeMethods.rs2_get_video_stream_intrinsics(Instance.Handle, out Intrinsics intrinsics, out var error);
             return intrinsics;
         }
 
-        public int Width { get { return width; } }
 
-        public int Height { get { return height; } }
 
-        internal int width;
-        internal int height;
     }
 }

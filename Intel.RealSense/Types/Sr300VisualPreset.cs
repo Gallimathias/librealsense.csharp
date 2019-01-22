@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-
-namespace Intel.RealSense
+﻿namespace Intel.RealSense.Types
 {
     public enum Sr300VisualPreset
     {
@@ -16,6 +12,6 @@ namespace Intel.RealSense
         GrCursor = 7,
         Default = 8,
         MidRange = 9,
-        IrOnly = 10,
+        IrOnly = 10
     }
 }

@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-
-namespace Intel.RealSense
+﻿namespace Intel.RealSense.Types
 {
     public enum Extension
     {
-        Unknown = 0,
+        Unknown = 0,            
         Debug = 1,
         Info = 2,
         Motion = 3,
@@ -22,6 +18,6 @@ namespace Intel.RealSense
         AdvancedMode = 13,
         Record = 14,
         VideoProfile = 15,
-        Playback = 16,
+        Playback = 16        
     }
 }

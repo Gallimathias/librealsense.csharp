@@ -1,23 +1,19 @@
-﻿using System;
+﻿using Intel.RealSense.Types;
+using System;
 using System.Runtime.InteropServices;
-using System.Collections.Generic;
-using System.Linq;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Processing
 {
     public class Align : ProcessingBlock
     {
-        public Align(Stream align_to)
+        public Align(Stream alignTo)
         {
-            object error;
-            m_instance = new HandleRef(this, NativeMethods.rs2_create_align(align_to, out error));
-            NativeMethods.rs2_start_processing_queue(m_instance.Handle, queue.m_instance.Handle, out error);
+            Instance = new HandleRef(this, NativeMethods.rs2_create_align(alignTo, out var error));
+            NativeMethods.rs2_start_processing_queue(Instance.Handle, queue.Instance.Handle, out error);
         }
 
         [Obsolete("This method is obsolete. Use Process with DisposeWith method instead")]
-        public FrameSet Process(FrameSet original, FramesReleaser releaser)
-        {
-            return Process(original).DisposeWith(releaser);
-        }
+        public FrameSet Process(FrameSet original, FramesReleaser releaser = null) 
+            => Process(original).DisposeWith(releaser);
     }
 }

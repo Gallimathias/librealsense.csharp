@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-
-namespace Intel.RealSense
+﻿namespace Intel.RealSense.Types
 {
     public enum FrameMetadataValue
     {
@@ -34,6 +30,6 @@ namespace Intel.RealSense
         Gamma = 25,
         ManualWhiteBalance = 26,
         PowerLineFrequency = 27,
-        LowLightCompensation = 28,
+        LowLightCompensation = 28
     }
 }

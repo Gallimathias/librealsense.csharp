@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-
-namespace Intel.RealSense
+﻿namespace Intel.RealSense.Types
 {
     public enum Rs400VisualPreset
     {
@@ -11,6 +7,6 @@ namespace Intel.RealSense
         Hand = 2,
         HighAccuracy = 3,
         HighDensity = 4,
-        MediumDensity = 5,
+        MediumDensity = 5
     }
 }

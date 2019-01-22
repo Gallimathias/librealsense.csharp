@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-
-namespace Intel.RealSense
+﻿namespace Intel.RealSense.Types
 {
     public enum ExceptionType
     {
@@ -13,6 +9,6 @@ namespace Intel.RealSense
         WrongApiCallSequence = 4,
         NotImplemented = 5,
         DeviceInRecoveryMode = 6,
-        Io = 7,
+        Io = 7
     }
 }

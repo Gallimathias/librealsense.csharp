@@ -1,17 +1,18 @@
-﻿using Intel.RealSense.Profiles;
+﻿using Intel.RealSense.Pooling;
+using Intel.RealSense.Profiles;
 using Intel.RealSense.Types;
 using System;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Intel.RealSense.Frames
 {
-    public class Frame : IDisposable
+    public class Frame : IDisposable, IAsyncPoolElement
     {
-        internal static readonly FramePool<Frame> Pool; //TODO: Should be reimplemented as Threadsafe Pool.
-
+        protected IAsyncPool CurrentPool;
         static Frame()
         {
-            Pool = new FramePool<Frame>(ptr => new Frame(ptr));
         }
 
         public bool IsComposite => NativeMethods.rs2_is_frame_extendable_to(Instance.Handle, Extension.CompositeFrame, out var error) > 0;
@@ -36,16 +37,7 @@ namespace Intel.RealSense.Frames
         {
             Instance = new HandleRef(this, ptr);
         }
-
-        public virtual void Release()
-        {
-            if (Instance.Handle != IntPtr.Zero)
-                NativeMethods.rs2_release_frame(Instance.Handle);
-
-            Instance = new HandleRef(this, IntPtr.Zero);
-            Pool.Release(this);
-        }
-
+        
         public Frame Clone()
         {
             NativeMethods.rs2_frame_add_ref(Instance.Handle, out var error);
@@ -90,6 +82,18 @@ namespace Intel.RealSense.Frames
                 Release();
                 disposedValue = true;
             }
+        }
+
+        public Task Pool(IAsyncPool pool, CancellationToken cancellationToken) 
+            => Task.Run(() => CurrentPool = pool, cancellationToken);
+
+        public Task Release(CancellationToken cancellationToken)
+        {
+            if (Instance.Handle != IntPtr.Zero)
+                NativeMethods.rs2_release_frame(Instance.Handle);
+
+            Instance = new HandleRef(this, IntPtr.Zero);
+            return CurrentPool.OnRelease(this, cancellationToken);
         }
 
         // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.

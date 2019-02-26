@@ -194,13 +194,10 @@ namespace Intel.RealSense
                 return new Frame(ptr);
         }
 
-        public Task Pool(IAsyncPool pool, CancellationToken cancellationToken)
-        {
-            this.pool = pool;
-            return Task.CompletedTask;
-        }
+        public Task Pool(IAsyncPool pool, CancellationToken cancellationToken) 
+            => Task.Run(() => this.pool = pool, cancellationToken);
 
-        public async Task Release(CancellationToken cancellationToken)
+        public Task Release(CancellationToken cancellationToken)
         {
             if (Instance.Handle != IntPtr.Zero)
                 NativeMethods.rs2_release_frame(Instance.Handle);
@@ -208,7 +205,7 @@ namespace Intel.RealSense
             Instance = new HandleRef(this, IntPtr.Zero);
             initialized = false;
 
-            await pool.OnRelease(this, cancellationToken);
+            return pool.OnRelease(this, cancellationToken);
         }
     }
 }

@@ -10,7 +10,7 @@ using System.Linq;
 
 namespace Intel.RealSense
 {
-    public class FrameSetPool : Pool<FrameSet>
+    public sealed class FrameSetPool : Pool<FrameSet>
     {
         public async Task<FrameSet> Next(IntPtr ptr, CancellationToken cancellationToken)
         {

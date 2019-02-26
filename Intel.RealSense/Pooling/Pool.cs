@@ -12,11 +12,9 @@ namespace Intel.RealSense.Pooling
         protected readonly ConcurrentStack<IAsyncPoolElement> stack;
 
         public Pool()
-        {
-            stack = new ConcurrentStack<IAsyncPoolElement>();
-        }
+            => stack = new ConcurrentStack<IAsyncPoolElement>();
 
-        public virtual async Task<T> Next(CancellationToken cancellationToken) => await Task.Run(() =>
+        public virtual Task<T> Next(CancellationToken cancellationToken) => Task.Run(() =>
         {
             if (stack.TryPop(out IAsyncPoolElement poolElement))
             {
@@ -34,7 +32,7 @@ namespace Intel.RealSense.Pooling
         public virtual Task OnFinalize(IAsyncPoolElement poolElement, CancellationToken cancellationToken)
             => Task.CompletedTask;
 
-        public virtual async Task OnRelease(IAsyncPoolElement poolElement, CancellationToken cancellationToken)
-            => await Task.Run(() => stack.Push(poolElement), cancellationToken);
+        public virtual Task OnRelease(IAsyncPoolElement poolElement, CancellationToken cancellationToken)
+            => Task.Run(() => stack.Push(poolElement), cancellationToken);
     }
 }

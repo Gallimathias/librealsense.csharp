@@ -10,14 +10,19 @@ namespace Intel.RealSense.Pooling
     public abstract class Pool<T> : IAsyncPool where T : IAsyncPoolElement
     {
         protected readonly ConcurrentStack<IAsyncPoolElement> stack;
+        protected readonly Context context;
 
-        public Pool()
-            => stack = new ConcurrentStack<IAsyncPoolElement>();
+        public Pool(Context context)
+        {
+            stack = new ConcurrentStack<IAsyncPoolElement>();
+            this.context = context;
+        }
 
         public virtual Task<T> Next(CancellationToken cancellationToken) => Task.Run(() =>
         {
             if (stack.TryPop(out IAsyncPoolElement poolElement))
             {
+                poolElement.Pool(this, cancellationToken);
                 return (T)poolElement;
             }
             else

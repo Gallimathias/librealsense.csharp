@@ -1,4 +1,6 @@
 ﻿using Intel.RealSense.Devices;
+using Intel.RealSense.Frames;
+using Intel.RealSense.Pooling;
 using Intel.RealSense.Types;
 using System;
 using System.Runtime.InteropServices;
@@ -11,17 +13,6 @@ namespace Intel.RealSense
         /// create a static snapshot of all connected devices at the time of the call
         /// </summary>
         public DeviceList Devices => QueryDevices();
-
-        public delegate void OnDevicesChangedDelegate(DeviceList removed, DeviceList added);
-        public event OnDevicesChangedDelegate OnDevicesChanged;
-
-        internal HandleRef Instance;
-
-        // Keeps the delegate alive, if we were to assign onDevicesChanged directly, there'll be 
-        // no managed reference it, it will be collected and cause a native exception.
-        private readonly rs2_devices_changed_callback onDevicesChangedCallback;
-
-        public readonly int apiVersion;
         public string Version
         {
             get
@@ -33,16 +24,35 @@ namespace Intel.RealSense
             }
         }
 
+        public delegate void OnDevicesChangedDelegate(DeviceList removed, DeviceList added);
+        public event OnDevicesChangedDelegate OnDevicesChanged;
+
+        internal FramePool FramePool { get; private set; }
+        internal FrameSetPool FrameSetPool { get; private set; }
+
+        internal IntPtr Instance => instance.Handle;
+
+        private readonly HandleRef instance;
+        public readonly int apiVersion;
+       
+
+        // Keeps the delegate alive, if we were to assign onDevicesChanged directly, there'll be 
+        // no managed reference it, it will be collected and cause a native exception.
+        private readonly rs2_devices_changed_callback onDevicesChangedCallback;
+
         /// <summary>
         /// default librealsense context class
         /// </summary>
         public Context()
         {
             apiVersion = NativeMethods.rs2_get_api_version(out var error);
-            Instance = new HandleRef(this, NativeMethods.rs2_create_context(apiVersion, out error));
+            instance = new HandleRef(this, NativeMethods.rs2_create_context(apiVersion, out error));
 
             onDevicesChangedCallback = new rs2_devices_changed_callback(InvokeDevicesChanged);
-            NativeMethods.rs2_set_devices_changed_callback(Instance.Handle, onDevicesChangedCallback, IntPtr.Zero, out error);
+            NativeMethods.rs2_set_devices_changed_callback(instance.Handle, onDevicesChangedCallback, IntPtr.Zero, out error);
+
+            FramePool = new FramePool(this);
+            FrameSetPool = new FrameSetPool(this);
         }
 
         /// <summary>
@@ -51,7 +61,7 @@ namespace Intel.RealSense
         /// <returns></returns>
         public DeviceList QueryDevices(bool include_platform_camera = false)
         {
-            var ptr = NativeMethods.rs2_query_devices_ex(Instance.Handle,
+            var ptr = NativeMethods.rs2_query_devices_ex(instance.Handle,
                 include_platform_camera ? 0xff : 0xfe, out var error);
 
             return new DeviceList(ptr);
@@ -79,10 +89,10 @@ namespace Intel.RealSense
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
                 // TODO: set large fields to null.
-                if (Instance.Handle != IntPtr.Zero)
+                if (instance.Handle != IntPtr.Zero)
                 {
-                    NativeMethods.rs2_delete_context(Instance.Handle);
-                    Instance = new HandleRef(this, IntPtr.Zero);
+                    NativeMethods.rs2_delete_context(instance.Handle);
+                    //instance = new HandleRef(this, IntPtr.Zero);
                 }
 
                 disposedValue = true;

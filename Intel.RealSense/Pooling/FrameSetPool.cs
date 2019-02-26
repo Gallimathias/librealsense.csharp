@@ -12,12 +12,19 @@ namespace Intel.RealSense
 {
     public sealed class FrameSetPool : Pool<FrameSet>
     {
+        public FrameSetPool(Context context) : base(context)
+        {
+        }
+
         public async Task<FrameSet> Next(IntPtr ptr, CancellationToken cancellationToken)
         {
             var result = await Next(cancellationToken);
 
             if (result == null)
-                result = new FrameSet(ptr);
+            {
+                result = new FrameSet(context, ptr);
+                await result.Pool(this, cancellationToken);
+            }
 
             return result;
         }

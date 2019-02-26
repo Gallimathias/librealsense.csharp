@@ -22,13 +22,14 @@ namespace Intel.RealSense
         internal readonly FrameEnumerator enumerator;
         internal readonly List<IDisposable> disposables;
 
-        private IAsyncPool pool;
+        private Pool<FrameSet> pool;
         private bool initialized;
-
-        public Frame AsFrame()
+        private readonly Context context;
+        
+        public Task<Frame> AsFrame(CancellationToken token)
         {
             NativeMethods.rs2_frame_add_ref(Instance.Handle, out var error);
-            return Frame.CreateFrame(Instance.Handle);
+            return context.FramePool.CreateFrame(Instance.Handle, token);
         }
 
         public T FirstOrDefault<T>(Stream stream, Format format = Format.Any) where T : Frame
@@ -65,7 +66,9 @@ namespace Intel.RealSense
             for (int i = 0; i < Count; i++)
             {
                 var ptr = NativeMethods.rs2_extract_frame(Instance.Handle, i, out var error);
-                yield return CreateFrame(ptr);
+                var task = context.FramePool.CreateFrame(ptr, CancellationToken.None);
+                task.Wait();
+                yield return task.Result;
             }
         }
 
@@ -79,7 +82,9 @@ namespace Intel.RealSense
             get
             {
                 var ptr = NativeMethods.rs2_extract_frame(Instance.Handle, index, out var error);
-                return Frame.CreateFrame(ptr);
+                var task = context.FramePool.CreateFrame(ptr, CancellationToken.None);
+                task.Wait();
+                return task.Result;
             }
         }
         public Frame this[Stream stream, int index = 0] => FirstOrDefault<Frame>(f =>
@@ -93,12 +98,15 @@ namespace Intel.RealSense
                 return p.Stream == stream && p.Format == format && p.Index == index;
         });
 
-
-        internal FrameSet(IntPtr ptr)
+        internal FrameSet(Context context)
         {
             enumerator = new FrameEnumerator(this);
             disposables = new List<IDisposable>();
             initialized = false;
+            this.context = context;
+        }
+        internal FrameSet(Context context, IntPtr ptr) : this(context)
+        {            
             Initialize(ptr);
         }
 
@@ -116,6 +124,7 @@ namespace Intel.RealSense
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
+        
 
         protected virtual void Dispose(bool disposing)
         {
@@ -182,20 +191,9 @@ namespace Intel.RealSense
         public static FrameSet FromFrame(Frame composite, FramesReleaser releaser)
             => FromFrame(composite, null as Pool<FrameSet>).DisposeWith(releaser);
 
-        internal static Frame CreateFrame(IntPtr ptr)
-        {
-            if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.Points, out var error) > 0)
-                return new Points(ptr);
-            else if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.DepthFrame, out error) > 0)
-                return new DepthFrame(ptr);
-            else if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.VideoFrame, out error) > 0)
-                return new VideoFrame(ptr);
-            else
-                return new Frame(ptr);
-        }
 
         public Task Pool(IAsyncPool pool, CancellationToken cancellationToken) 
-            => Task.Run(() => this.pool = pool, cancellationToken);
+            => Task.Run(() => this.pool = pool as Pool<FrameSet>, cancellationToken);
 
         public Task Release(CancellationToken cancellationToken)
         {

@@ -3,21 +3,20 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Intel.RealSense
 {
     public class Pipeline : IDisposable, IEnumerable<Frame>
     {
         internal HandleRef instance;
+        private readonly Context context;
 
         public Pipeline(Context ctx)
         {
-            instance = new HandleRef(this, NativeMethods.rs2_create_pipeline(ctx.Instance.Handle, out var error));
-        }
-        public Pipeline()
-        {
-            var ctx = new Context();
-            instance = new HandleRef(this, NativeMethods.rs2_create_pipeline(ctx.Instance.Handle, out var error));
+            instance = new HandleRef(this, NativeMethods.rs2_create_pipeline(ctx.Instance, out var error));
+            context = ctx;
         }
 
         public PipelineProfile Start()
@@ -34,10 +33,12 @@ namespace Intel.RealSense
         public void Stop()
             => NativeMethods.rs2_pipeline_stop(instance.Handle, out var error);
 
-        public FrameSet WaitForFrames(uint timeoutMs = 5000)
+        public async Task<FrameSet> WaitForFrames(CancellationToken token, uint timeoutMs = 5000)
         {
             var ptr = NativeMethods.rs2_pipeline_wait_for_frames(instance.Handle, timeoutMs, out var error);
-            return FrameSet.Pool.Next(ptr);
+            var frameSet = await context.FrameSetPool.Next(token);
+            frameSet.Initialize(ptr);
+            return frameSet;
         }
 
         public bool PollForFrames(out FrameSet result)
@@ -46,10 +47,12 @@ namespace Intel.RealSense
 
             if (NativeMethods.rs2_pipeline_poll_for_frames(instance.Handle, out IntPtr ptr, out var error) > 0)
             {
-                result = FrameSet.Pool.Next(ptr);
+                var task = context.FrameSetPool.Next(CancellationToken.None);
+                task.Wait();
+                result = task.Result;
                 return true;
             }
-            
+
             return false;
         }
 
@@ -58,12 +61,16 @@ namespace Intel.RealSense
             while (PollForFrames(out FrameSet frames))
             {
                 using (frames)
-                using (var frame = frames.AsFrame())
-                    yield return frame;
+                {
+                    var task = frames.AsFrame(CancellationToken.None);
+                    task.Wait();
+                    using (var frame = task.Result)
+                        yield return frame;
+                }
             }
         }
 
-        IEnumerator IEnumerable.GetEnumerator() 
+        IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
 
         #region IDisposable Support
@@ -108,6 +115,6 @@ namespace Intel.RealSense
                 NativeMethods.rs2_delete_pipeline(instance.Handle);
             instance = new HandleRef(this, IntPtr.Zero);
         }
-        
+
     }
 }

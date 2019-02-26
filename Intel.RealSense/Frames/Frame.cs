@@ -10,10 +10,7 @@ namespace Intel.RealSense.Frames
 {
     public class Frame : IDisposable, IAsyncPoolElement
     {
-        protected IAsyncPool CurrentPool;
-        static Frame()
-        {
-        }
+        public bool Initialized { get; private set; }
 
         public bool IsComposite => NativeMethods.rs2_is_frame_extendable_to(Instance.Handle, Extension.CompositeFrame, out var error) > 0;
         public IntPtr Data => NativeMethods.rs2_get_frame_data(Instance.Handle, out var error);
@@ -26,38 +23,40 @@ namespace Intel.RealSense.Frames
                 return frameNumber;
             }
         }
+
+        internal static object CreateFrame(IntPtr ptr, object cancelationTokenSource) => throw new NotImplementedException();
+
         public double Timestamp => NativeMethods.rs2_get_frame_timestamp(Instance.Handle, out var error);
         public TimestampDomain TimestampDomain => NativeMethods.rs2_get_frame_timestamp_domain(Instance.Handle, out var error);
 
         public IntPtr NativePtr => Instance.Handle; //TODO: Native pointers should not be visible
 
         internal HandleRef Instance;
+        protected Pool<Frame> pool;
+        protected Context context;
 
-        public Frame(IntPtr ptr)
+        public Frame(Context context, IntPtr ptr)
         {
-            Instance = new HandleRef(this, ptr);
+            Initialized = false;
+            this.context = context;
+            Initialize(ptr);
         }
-        
-        public Frame Clone()
+
+        public Task<Frame> Clone(CancellationToken token)
         {
             NativeMethods.rs2_frame_add_ref(Instance.Handle, out var error);
-            return CreateFrame(Instance.Handle);
+            return context.FramePool.CreateFrame(Instance.Handle, token);
         }
 
-        internal static Frame CreateFrame(IntPtr ptr)
+        public virtual void Initialize(IntPtr ptr)
         {
-            if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.Points, out var error) > 0)
-                return Pool.Get(ptr);
-            else if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.DepthFrame, out error) > 0)
-                return Pool.Get(ptr);
-            else if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.VideoFrame, out error) > 0)
-                return Pool.Get(ptr);
-            else
-                return Pool.Get(ptr);
+            Instance = new HandleRef(this, ptr);
+            Initialized = true;
         }
+        
 
         #region IDisposable Support
-        internal bool disposedValue = false; // To detect redundant calls TODO: internal dispose control should never be externally influenced
+        private bool disposedValue = false;
 
         // This code added to correctly implement the disposable pattern.
         public void Dispose()
@@ -75,17 +74,17 @@ namespace Intel.RealSense.Frames
                 if (disposing)
                 {
                     // TODO: dispose managed state (managed objects).
+                    pool.OnFinalize(this, CancellationToken.None);
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
                 // TODO: set large fields to null.
-                Release();
                 disposedValue = true;
             }
         }
 
-        public Task Pool(IAsyncPool pool, CancellationToken cancellationToken) 
-            => Task.Run(() => CurrentPool = pool, cancellationToken);
+        public Task Pool(IAsyncPool pool, CancellationToken cancellationToken)
+            => Task.Run(() => this.pool = pool as Pool<Frame>, cancellationToken);
 
         public Task Release(CancellationToken cancellationToken)
         {
@@ -93,7 +92,9 @@ namespace Intel.RealSense.Frames
                 NativeMethods.rs2_release_frame(Instance.Handle);
 
             Instance = new HandleRef(this, IntPtr.Zero);
-            return CurrentPool.OnRelease(this, cancellationToken);
+            Initialized = false;
+
+            return pool.OnRelease(this, cancellationToken);
         }
 
         // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.

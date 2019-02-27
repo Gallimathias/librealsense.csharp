@@ -7,10 +7,12 @@ namespace Intel.RealSense.Pipelines
     public class Config : IDisposable
     {
         internal HandleRef Instance;
+        private readonly Context context;
 
-        public Config()
+        public Config(Context context)
         {
             Instance = new HandleRef(this, NativeMethods.rs2_create_config(out var error));
+            this.context = context;
         }
 
         public void EnableStream(Stream s, int index = -1)
@@ -77,7 +79,7 @@ namespace Intel.RealSense.Pipelines
         public PipelineProfile Resolve(Pipeline pipe)
         {
             var res = NativeMethods.rs2_config_resolve(Instance.Handle, pipe.instance.Handle, out var error);
-            return new PipelineProfile(res);
+            return new PipelineProfile(context, res);
         }
 
         #region IDisposable Support

@@ -3,6 +3,8 @@ using Intel.RealSense.Sensors;
 using Intel.RealSense.Types;
 using System;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Intel.RealSense.Processing
 {
@@ -13,12 +15,13 @@ namespace Intel.RealSense.Processing
         internal HandleRef Instance;
 
         protected readonly FrameQueue queue;
-
+        protected readonly Context context;
         private Sensor.SensorOptions options;
 
-        public ProcessingBlock()
+        public ProcessingBlock(Context context)
         {
-            queue = new FrameQueue(1);            
+            queue = new FrameQueue(context, 1);
+            this.context = context;
         }
 
         /// <summary>
@@ -26,7 +29,7 @@ namespace Intel.RealSense.Processing
         /// </summary>
         /// <param name="original"></param>
         /// <returns></returns>
-        public Frame Process(Frame original)
+        public Task<Frame> Process(Frame original, CancellationToken token) => Task.Run(() =>
         {
             NativeMethods.rs2_frame_add_ref(original.Instance.Handle, out var error);
             NativeMethods.rs2_process_frame(Instance.Handle, original.Instance.Handle, out error);
@@ -35,14 +38,14 @@ namespace Intel.RealSense.Processing
                 return f;
 
             return original;
-        }
-        public FrameSet Process(FrameSet original)
+        }, token);
+        public async Task<FrameSet> Process(FrameSet original, CancellationToken token)
         {
             FrameSet rv;
 
-            using (var singleOriginal = original.AsFrame())
-            using (var processed = Process(singleOriginal))
-                rv = FrameSet.FromFrame(processed);
+            using (var singleOriginal = await original.AsFrame(token))
+            using (var processed = await Process(singleOriginal, token))
+                rv = FrameSet.FromFrame(processed, context.FrameSetPool);
 
             return rv;
         }

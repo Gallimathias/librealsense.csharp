@@ -22,7 +22,7 @@ namespace Intel.RealSense.Devices
             set => NativeMethods.rs2_playback_device_set_playback_speed(Instance, value, out var error);
         }
 
-        internal PlaybackDevice(IntPtr dev) : base(dev)
+        internal PlaybackDevice(Context context,IntPtr dev) : base(context, dev)
         {
 
         }
@@ -36,14 +36,14 @@ namespace Intel.RealSense.Devices
         public void Seek(long time)
             => NativeMethods.rs2_playback_seek(Instance, time, out var error);
 
-        public static PlaybackDevice FromDevice(Device dev)
+        public static PlaybackDevice FromDevice(Context context, Device dev)
         {
             if (NativeMethods.rs2_is_device_extendable_to(dev.Instance, Extension.Playback, out var error) == 0)
             {
                 throw new ArgumentException("Device does not support Playback");
             }
 
-            return new PlaybackDevice(dev.Instance);
+            return new PlaybackDevice(context, dev.Instance);
         }
 
         protected override void Dispose(bool disposing)

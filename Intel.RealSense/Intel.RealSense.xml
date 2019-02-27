@@ -79,7 +79,7 @@
             </summary>
             <param name="cb"></param>
         </member>
-        <member name="M:Intel.RealSense.Processing.ProcessingBlock.Process(Intel.RealSense.Frames.Frame)">
+        <member name="M:Intel.RealSense.Processing.ProcessingBlock.Process(Intel.RealSense.Frames.Frame,System.Threading.CancellationToken)">
             <summary>
             Process frame and return the result
             </summary>

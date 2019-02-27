@@ -11,7 +11,7 @@ namespace Intel.RealSense.Devices
             get
             {
                 var ptr = NativeMethods.rs2_create_device(instance, index, out var error);
-                return new Device(ptr);
+                return new Device(context, ptr);
             }
         }
         public int Count
@@ -24,10 +24,12 @@ namespace Intel.RealSense.Devices
         }
 
         private IntPtr instance;
+        private readonly Context context;
 
-        public DeviceList(IntPtr ptr)
+        public DeviceList(Context context, IntPtr ptr)
         {
             instance = ptr;
+            this.context = context;
         }
 
 
@@ -39,7 +41,7 @@ namespace Intel.RealSense.Devices
             for (int i = 0; i < deviceCount; i++)
             {
                 var ptr = NativeMethods.rs2_create_device(instance, i, out error);
-                yield return new Device(ptr);
+                yield return new Device(context, ptr);
             }
         }
 

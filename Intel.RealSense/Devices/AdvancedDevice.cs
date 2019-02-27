@@ -35,19 +35,19 @@ namespace Intel.RealSense.Devices
             }
         }
 
-        internal AdvancedDevice(IntPtr dev) : base(dev)
+        internal AdvancedDevice(Context context, IntPtr dev) : base(context, dev)
         {
 
         }
 
-        public static AdvancedDevice FromDevice(Device dev)
+        public static AdvancedDevice FromDevice(Context context,Device dev)
         {
             if (NativeMethods.rs2_is_device_extendable_to(dev.Instance, Extension.AdvancedMode, out var error) == 0)
             {
                 throw new ArgumentException("Device does not support AdvancedMode");
             }
 
-            return new AdvancedDevice(dev.Instance);
+            return new AdvancedDevice(context, dev.Instance);
         }
     }
 }

@@ -22,8 +22,4 @@
     <DocumentationFile>C:\Projects\Privat\librealsense.csharp\Intel.RealSense\Intel.RealSense.xml</DocumentationFile>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="LitGit" Version="0.1.0.16" />
-  </ItemGroup>
-
 </Project>

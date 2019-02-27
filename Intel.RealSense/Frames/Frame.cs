@@ -1,6 +1,5 @@
 using Intel.RealSense.Pooling;
 using Intel.RealSense.Processing;
-using Intel.RealSense.Profiles;
 using Intel.RealSense.StreamProfiles;
 using Intel.RealSense.Types;
 using System;

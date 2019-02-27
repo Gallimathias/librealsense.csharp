@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Intel.RealSense.Profiles
+namespace Intel.RealSense.StreamProfiles
 {
     internal class ProfilePool<T> where T : StreamProfile
     {

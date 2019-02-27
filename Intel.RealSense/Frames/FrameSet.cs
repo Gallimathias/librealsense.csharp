@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Frames
 {
     public class FrameSet : ICompositeDisposable, IEnumerable<Frame>, IAsyncPoolElement
     {

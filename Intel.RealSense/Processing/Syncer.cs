@@ -24,7 +24,7 @@ namespace Intel.RealSense.Processing
         public Task<FrameSet> WaitForFrames(CancellationToken token,uint timeoutMs = 5000) 
             => context.FrameSetPool.Next(NativeMethods.rs2_wait_for_frame(queue.Instance.Handle, timeoutMs, out var error), token);
 
-        public bool PollForFrames(out FrameSet result, FramesReleaser releaser = null)
+        public bool PollForFrames(out FrameSet result)
         {
             result = null;
 

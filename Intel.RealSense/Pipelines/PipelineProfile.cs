@@ -1,10 +1,10 @@
 ﻿using Intel.RealSense.Devices;
-using Intel.RealSense.Profiles;
+using Intel.RealSense.StreamProfiles;
 using Intel.RealSense.Types;
 using System;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Pipelines
 {
     public class PipelineProfile : IDisposable
     {

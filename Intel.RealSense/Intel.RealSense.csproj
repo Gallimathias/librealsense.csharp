@@ -2,6 +2,28 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>Intel.RealSense.Net</PackageId>
+    <Version>0.0.1</Version>
+    <Authors>Intel, Intel Contributors, Maximilian Krüger</Authors>
+    <Company />
+    <Product>Intel RealSense CSharp Wrapper</Product>
+    <Description>This wrapper is the CSharp interface for the Intel.Realsense SDK 2.0. The original Dll is still needed. This variant does not correspond to the original Intel CSharp wrapper but is a version adapted to CSharp needs.</Description>
+    <Copyright>Intel, Intel Contributors, Maximilian Krüger</Copyright>
+    <RepositoryUrl>https://github.com/Gallimathias/librealsense.csharp</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/IntelRealSense/librealsense</PackageProjectUrl>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/IntelRealSense/librealsense/master/LICENSE</PackageLicenseUrl>
+    <AssemblyVersion>0.0.0.1</AssemblyVersion>
+    <FileVersion>0.0.0.1</FileVersion>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>C:\Projects\Privat\librealsense.csharp\Intel.RealSense\Intel.RealSense.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LitGit" Version="0.1.0.16" />
+  </ItemGroup>
 
 </Project>

@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Pipelines
 {
     public class Pipeline : IDisposable, IEnumerable<Frame>
     {

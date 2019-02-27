@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Frames
 {
     public class FrameQueue : IDisposable, IEnumerable<Frame>
     {

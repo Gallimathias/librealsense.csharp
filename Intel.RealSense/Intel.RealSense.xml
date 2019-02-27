@@ -57,11 +57,6 @@
             <typeparam name="T"></typeparam>
             <param name="array"></param>
         </member>
-        <member name="T:Intel.RealSense.Helpers.ErrorMarshaler">
-            <summary>
-            Custom marshaler for throwing exceptions on errors codes.
-            </summary>
-        </member>
         <member name="M:Intel.RealSense.Processing.CustomProcessingBlock.Start(Intel.RealSense.Frames.FrameQueue)">
             <summary>
             Start the processing block, delivering frames to external queue

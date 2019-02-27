@@ -1,37 +1,45 @@
 ﻿using Intel.RealSense.Frames;
-using Intel.RealSense.Profiles;
+using Intel.RealSense.StreamProfiles;
 using Intel.RealSense.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Intel.RealSense.Processing
 {
     public struct FrameSource
     {
         internal readonly HandleRef Instance;
+        private readonly Context context;
 
-        internal FrameSource(HandleRef instance)
+        internal FrameSource(HandleRef instance, Context context)
         {
             Instance = instance;
+            this.context = context;
         }
 
-        public T AllocateVideoFrame<T>(StreamProfile profile, Frame original,
-           int bpp, int width, int height, int stride, Extension extension = Extension.VideoFrame) where T : Frame
+        public async Task<T> AllocateVideoFrame<T>(StreamProfile profile, Frame original,
+           int bpp, int width, int height, int stride, CancellationToken token, Extension extension = Extension.VideoFrame) where T : Frame
         {
             var fref = NativeMethods.rs2_allocate_synthetic_video_frame(Instance.Handle, profile.Instance.Handle, original.Instance.Handle, bpp, width, height, stride, extension, out var error);
-            return Frame.CreateFrame(fref) as T;
+            return (await context.FramePool.CreateFrame(fref, token)) as T;
         }
 
         [Obsolete("This method is obsolete. Use AllocateCompositeFrame with DisposeWith method instead")]
         public FrameSet AllocateCompositeFrame(FramesReleaser releaser, params Frame[] frames)
-            => AllocateCompositeFrame((IList<Frame>)frames).DisposeWith(releaser);
+        {
+            var task = AllocateCompositeFrame(frames, CancellationToken.None);
+            task.Wait();
+            return task.Result.DisposeWith(releaser);
+        }
 
-        public FrameSet AllocateCompositeFrame(params Frame[] frames)
-            => AllocateCompositeFrame((IList<Frame>)frames);
+        public Task<FrameSet> AllocateCompositeFrame(CancellationToken token, params Frame[] frames)
+            => AllocateCompositeFrame(frames, token);
 
-        public FrameSet AllocateCompositeFrame(IList<Frame> frames)
+        public Task<FrameSet> AllocateCompositeFrame(IList<Frame> frames, CancellationToken token)
         {
             if (frames == null)
                 throw new ArgumentNullException(nameof(frames));
@@ -51,7 +59,7 @@ namespace Intel.RealSense.Processing
                 }
 
                 var frame_ref = NativeMethods.rs2_allocate_composite_frame(Instance.Handle, frameRefs, fl, out error);
-                return FrameSet.Pool.Get(frame_ref);
+                return context.FrameSetPool.Next(frame_ref, token);
             }
             finally
             {
@@ -65,7 +73,7 @@ namespace Intel.RealSense.Processing
             NativeMethods.rs2_frame_add_ref(ptr, out var error);
             NativeMethods.rs2_synthetic_frame_ready(Instance.Handle, ptr, out error);
         }
-        public void FrameReady(Frame frame) 
+        public void FrameReady(Frame frame)
             => FrameReady(frame.Instance.Handle);
 
         public void FramesReady(FrameSet frameSet)

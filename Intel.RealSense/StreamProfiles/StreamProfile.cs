@@ -2,7 +2,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense.Profiles
+namespace Intel.RealSense.StreamProfiles
 {
     public class StreamProfile : IDisposable
     {

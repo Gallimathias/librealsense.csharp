@@ -1,5 +1,5 @@
 ﻿using Intel.RealSense.Frames;
-using Intel.RealSense.Profiles;
+using Intel.RealSense.StreamProfiles;
 using Intel.RealSense.Types;
 using System;
 using System.Collections;
@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Sensors
 {
     public class Sensor : IOptions, IDisposable
     {
@@ -34,22 +34,32 @@ namespace Intel.RealSense
            => new StreamProfileList(NativeMethods.rs2_get_stream_profiles(instance, out var error));
         public IEnumerable<VideoStreamProfile> VideoStreamProfiles
             => StreamProfiles.OfType<VideoStreamProfile>();
+        public AutoExposureROI AutoExposureSettings  { get
+            {
+                if (NativeMethods.rs2_is_sensor_extendable_to(instance, Extension.Roi, out var error) > 0)
+                {
+                    return new AutoExposureROI(instance);
+                }
+                return null;
+            }        
+        }
 
         //public delegate void FrameCallback<Frame, T>(Frame frame, T user_data);
         public delegate void FrameCallback(Frame frame);
 
         protected readonly IntPtr instance;
-
+        private readonly Context context;
         private CameraInfos info;
         private SensorOptions options;
         private FrameCallbackHandler callback;
         private FrameQueue queue;
 
-        internal Sensor(IntPtr sensor)
+        internal Sensor(Context context, IntPtr sensor)
         {
             //if (sensor == IntPtr.Zero)
             //    throw new ArgumentNullException();
             instance = sensor;
+            this.context = context;
         }
 
         /// <summary>
@@ -83,7 +93,7 @@ namespace Intel.RealSense
         {
             void cb2(IntPtr f, IntPtr u)
             {
-                using (var frame = new Frame(f))
+                using (var frame = new Frame(context, f))
                     cb(frame);
             }
             callback = cb2;
@@ -201,7 +211,8 @@ namespace Intel.RealSense
             }
 
             public Option Key { get; }
-            public string Description {
+            public string Description
+            {
                 get
                 {
                     if (description == null)
@@ -237,7 +248,7 @@ namespace Intel.RealSense
             private readonly float max;
             private readonly float step;
             private readonly float @default;
-            
+
             public CameraOption(IntPtr sensor, Option option)
             {
                 this.sensor = sensor;

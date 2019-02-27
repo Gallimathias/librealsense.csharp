@@ -3,7 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Intel.RealSense.Profiles
+namespace Intel.RealSense.StreamProfiles
 {
     public class StreamProfileList : IDisposable, IEnumerable<StreamProfile>
     {        

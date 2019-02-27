@@ -1,0 +1,148 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Intel.RealSense</name>
+    </assembly>
+    <members>
+        <member name="P:Intel.RealSense.Context.Devices">
+            <summary>
+            create a static snapshot of all connected devices at the time of the call
+            </summary>
+        </member>
+        <member name="M:Intel.RealSense.Context.#ctor">
+            <summary>
+            default librealsense context class
+            </summary>
+        </member>
+        <member name="M:Intel.RealSense.Context.QueryDevices(System.Boolean)">
+            <summary>
+            create a static snapshot of all connected devices at the time of the call
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="P:Intel.RealSense.Devices.Device.Sensors">
+            <summary>
+            create a static snapshot of all connected devices at the time of the call
+            </summary>
+        </member>
+        <member name="M:Intel.RealSense.Devices.Device.QuerySensors">
+            <summary>
+            create a static snapshot of all connected devices at the time of the call
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Intel.RealSense.Frames.Points.CopyTo(Intel.RealSense.Frames.Points.Vertex[])">
+            <summary>
+            Copy frame data to Vertex array
+            </summary>
+            <param name="array"></param>
+        </member>
+        <member name="M:Intel.RealSense.Frames.Points.CopyTo(Intel.RealSense.Frames.Points.TextureCoordinate[])">
+            <summary>
+            Copy frame data to TextureCoordinate array
+            </summary>
+            <param name="textureArray"></param>
+        </member>
+        <member name="M:Intel.RealSense.Frames.VideoFrame.CopyTo``1(``0[])">
+            <summary>
+            Copy frame data to managed typed array
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="array"></param>
+        </member>
+        <member name="M:Intel.RealSense.Frames.VideoFrame.CopyFrom``1(``0[])">
+            <summary>
+            Copy from data from managed array
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="array"></param>
+        </member>
+        <member name="T:Intel.RealSense.Helpers.ErrorMarshaler">
+            <summary>
+            Custom marshaler for throwing exceptions on errors codes.
+            </summary>
+        </member>
+        <member name="M:Intel.RealSense.Processing.CustomProcessingBlock.Start(Intel.RealSense.Frames.FrameQueue)">
+            <summary>
+            Start the processing block, delivering frames to external queue
+            </summary>
+            <param name="queue"></param>
+        </member>
+        <member name="M:Intel.RealSense.Processing.CustomProcessingBlock.Start">
+            <summary>
+            Start the processing block
+            </summary>
+        </member>
+        <member name="M:Intel.RealSense.Processing.CustomProcessingBlock.Start(Intel.RealSense.Processing.CustomProcessingBlock.FrameCallback)">
+            <summary>
+            Start the processing block, delivering frames to a callback
+            </summary>
+            <param name="cb"></param>
+        </member>
+        <member name="M:Intel.RealSense.Processing.ProcessingBlock.Process(Intel.RealSense.Frames.Frame,System.Threading.CancellationToken)">
+            <summary>
+            Process frame and return the result
+            </summary>
+            <param name="original"></param>
+            <returns></returns>
+        </member>
+        <member name="P:Intel.RealSense.Sensors.Sensor.DepthScale">
+            <summary>
+            retrieve mapping between the units of the depth image and meters
+            </summary>
+            <returns> depth in meters corresponding to a depth value of 1</returns>
+        </member>
+        <member name="M:Intel.RealSense.Sensors.Sensor.Open(Intel.RealSense.StreamProfiles.StreamProfile)">
+            <summary>
+            open subdevice for exclusive access, by commiting to a configuration
+            </summary>
+            <param name="profile"></param>
+        </member>
+        <member name="M:Intel.RealSense.Sensors.Sensor.Open(Intel.RealSense.StreamProfiles.StreamProfile[])">
+            <summary>
+            open subdevice for exclusive access, by commiting to composite configuration, specifying one or more stream profiles 
+            this method should be used for interdendent streams, such as depth and infrared, that have to be configured together
+            </summary>
+            <param name="profiles"></param>
+        </member>
+        <member name="M:Intel.RealSense.Sensors.Sensor.Close">
+            <summary>
+            close subdevice for exclusive access this method should be used for releasing device resource
+            </summary>
+        </member>
+        <member name="T:Intel.RealSense.Types.Extrinsics">
+            <summary>
+            Cross-stream extrinsics: encode the topology describing how the different devices are connected.
+            </summary>
+        </member>
+        <member name="T:Intel.RealSense.Types.Intrinsics">
+            <summary>
+            Video stream intrinsics
+            </summary>
+        </member>
+        <member name="F:Intel.RealSense.Types.Intrinsics.height">
+            Width of the image in pixels 
+        </member>
+        <member name="F:Intel.RealSense.Types.Intrinsics.ppx">
+            Height of the image in pixels 
+        </member>
+        <member name="F:Intel.RealSense.Types.Intrinsics.ppy">
+            Horizontal coordinate of the principal point of the image, as a pixel offset from the left edge 
+        </member>
+        <member name="F:Intel.RealSense.Types.Intrinsics.fx">
+            Vertical coordinate of the principal point of the image, as a pixel offset from the top edge 
+        </member>
+        <member name="F:Intel.RealSense.Types.Intrinsics.fy">
+            Focal length of the image plane, as a multiple of pixel width 
+        </member>
+        <member name="F:Intel.RealSense.Types.Intrinsics.model">
+            Focal length of the image plane, as a multiple of pixel height 
+        </member>
+        <member name="F:Intel.RealSense.Types.Intrinsics.coeffs">
+            Distortion model of the image 
+        </member>
+        <member name="M:Intel.RealSense.Types.Intrinsics.ToString">
+            Distortion coefficients 
+        </member>
+    </members>
+</doc>

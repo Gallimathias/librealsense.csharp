@@ -1,4 +1,5 @@
-﻿using Intel.RealSense.Types;
+﻿using Intel.RealSense.Frames;
+using Intel.RealSense.Types;
 using System;
 using System.Runtime.InteropServices;
 
@@ -6,7 +7,7 @@ namespace Intel.RealSense.Processing
 {
     public class Align : ProcessingBlock
     {
-        public Align(Stream alignTo)
+        public Align(Context context, Stream alignTo) : base(context)
         {
             Instance = new HandleRef(this, NativeMethods.rs2_create_align(alignTo, out var error));
             NativeMethods.rs2_start_processing_queue(Instance.Handle, queue.Instance.Handle, out error);

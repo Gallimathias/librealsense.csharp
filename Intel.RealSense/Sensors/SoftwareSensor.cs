@@ -1,18 +1,18 @@
-﻿using Intel.RealSense.Profiles;
+﻿using Intel.RealSense.StreamProfiles;
 using Intel.RealSense.Types;
 using System;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Sensors
 {
     public class SoftwareSensor : Sensor
     {
-        internal SoftwareSensor(IntPtr ptr) : base(ptr)
+        internal SoftwareSensor(Context context, IntPtr ptr) : base(context, ptr)
         {
         }
 
         public void AddVideoFrame(SoftwareVideoFrame f, IntPtr user_data) 
-            => NativeMethods.rs2_software_sensor_on_video_frame(Instance, f, user_data, out var error);
+            => NativeMethods.rs2_software_sensor_on_video_frame(Instance, f, out var error);
         public void AddVideoFrame<T>(T[] pixels, int stride, int bpp, double timestamp, TimestampDomain domain, int frameNumber, VideoStreamProfile profile)
         {
             var h = GCHandle.Alloc(pixels, GCHandleType.Pinned);
@@ -20,7 +20,7 @@ namespace Intel.RealSense
             AddVideoFrame(new SoftwareVideoFrame
             {
                 pixels = h.AddrOfPinnedObject(),
-                deleter = (f, p) => { GCHandle.FromIntPtr(p).Free(); },
+                deleter = (f) => { GCHandle.FromIntPtr(f).Free(); },
                 stride = stride,
                 bpp = bpp,
                 timestamp = timestamp,

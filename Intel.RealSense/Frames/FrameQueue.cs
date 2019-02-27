@@ -5,16 +5,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Frames
 {
     public class FrameQueue : IDisposable, IEnumerable<Frame>
     {
         internal HandleRef Instance;
+        private readonly Context context;
 
-        public FrameQueue(int capacity = 1)
+        public FrameQueue(Context context, int capacity = 1)
         {
             Instance = new HandleRef(this, NativeMethods.rs2_create_frame_queue(capacity, out var error));
+            this.context = context;
         }
 
         public bool PollForFrame(out Frame frame)
@@ -23,23 +27,27 @@ namespace Intel.RealSense
 
             if (NativeMethods.rs2_poll_for_frame(Instance.Handle, out IntPtr ptr, out var error) > 0)
             {
-                frame = Frame.CreateFrame(ptr);
+                var task = context.FramePool.CreateFrame(ptr, CancellationToken.None);
+                task.Wait();
+                frame = task.Result;
                 return true;
             }
             
             return false;
         }
 
-        public Frame WaitForFrame(uint timeoutMs = 5000)
+        public Task<Frame> WaitForFrame(CancellationToken token, uint timeoutMs = 5000)
         {
             var ptr = NativeMethods.rs2_wait_for_frame(Instance.Handle, timeoutMs, out var error);
-            return Frame.CreateFrame(ptr);
+            return context.FramePool.CreateFrame(ptr, token);
         }
 
-        public FrameSet WaitForFrames(uint timeoutMs = 5000)
+        public async Task<FrameSet> WaitForFrames(CancellationToken token, uint timeoutMs = 5000)
         {
             var ptr = NativeMethods.rs2_wait_for_frame(Instance.Handle, timeoutMs, out var error);
-            return FrameSet.Pool.Get(ptr);
+            var frameSet = await context.FrameSetPool.Next(token);
+            frameSet.Initialize(ptr);
+            return frameSet;
         }
 
         public void Enqueue(Frame f)

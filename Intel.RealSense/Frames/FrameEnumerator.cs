@@ -3,12 +3,16 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Frames
 {
     public class FrameEnumerator : IEnumerator<Frame>
     {
         public Frame Current { get; private set; }
+
+        private readonly Context context;
+
         object IEnumerator.Current
         {
             get
@@ -23,11 +27,12 @@ namespace Intel.RealSense
         private readonly FrameSet frameSet;
         private int index;
 
-        public FrameEnumerator(FrameSet frameSet)
+        public FrameEnumerator(Context context, FrameSet frameSet)
         {
             this.frameSet = frameSet;
             index = 0;
             Current = default(Frame);
+            this.context = context;
         }
 
         public void Dispose()
@@ -40,7 +45,9 @@ namespace Intel.RealSense
             if ((uint)index < (uint)frameSet.Count)
             {
                 var ptr = NativeMethods.rs2_extract_frame(frameSet.Instance.Handle, index, out var error);
-                Current = Frame.CreateFrame(ptr);
+                var task = context.FramePool.CreateFrame(ptr, CancellationToken.None);
+                task.Wait();
+                Current = task.Result;
                 index++;
                 return true;
             }

@@ -1,10 +1,10 @@
 ﻿using Intel.RealSense.Devices;
-using Intel.RealSense.Profiles;
+using Intel.RealSense.StreamProfiles;
 using Intel.RealSense.Types;
 using System;
 using System.Runtime.InteropServices;
 
-namespace Intel.RealSense
+namespace Intel.RealSense.Pipelines
 {
     public class PipelineProfile : IDisposable
     {
@@ -13,7 +13,7 @@ namespace Intel.RealSense
             get
             {
                 var ptr = NativeMethods.rs2_pipeline_profile_get_device(instance.Handle, out var error);
-                return new Device(ptr);
+                return new Device(context, ptr);
             }
         }
 
@@ -27,10 +27,12 @@ namespace Intel.RealSense
         }
 
         private HandleRef instance;
+        private readonly Context context;
 
-        public PipelineProfile(IntPtr p)
+        public PipelineProfile(Context context, IntPtr p)
         {
             instance = new HandleRef(this, p);
+            this.context = context;
         }
 
 

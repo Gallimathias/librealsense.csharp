@@ -1,7 +1,7 @@
 ﻿using Intel.RealSense.Types;
 using System;
 
-namespace Intel.RealSense.Profiles
+namespace Intel.RealSense.StreamProfiles
 {
     public class VideoStreamProfile : StreamProfile
     {

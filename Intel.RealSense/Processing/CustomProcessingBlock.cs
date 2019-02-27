@@ -77,7 +77,7 @@ namespace Intel.RealSense.Processing
         private void ProcessingBlockCallback(IntPtr f, IntPtr src, IntPtr u)
         {
             var callback = GCHandle.FromIntPtr(u).Target as FrameProcessorCallback;
-            var task = context.FramePool.CreateFrame(f, CancellationToken.None);
+            var task = context.FramePool.Next(f, CancellationToken.None);
             task.Wait();
             using (var frame = task.Result)
                 callback(frame, new FrameSource(new HandleRef(frame, src), context));
@@ -86,7 +86,7 @@ namespace Intel.RealSense.Processing
         private void ProcessingBlockFrameCallback(IntPtr f, IntPtr u)
         {
             var callback = GCHandle.FromIntPtr(u).Target as FrameCallback;
-            var task = context.FramePool.CreateFrame(f, CancellationToken.None);
+            var task = context.FramePool.Next(f, CancellationToken.None);
             task.Wait();
             using (var frame = task.Result)
                 callback(frame);

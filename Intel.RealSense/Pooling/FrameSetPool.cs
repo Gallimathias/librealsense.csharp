@@ -26,6 +26,10 @@ namespace Intel.RealSense
                 result = new FrameSet(context, ptr);
                 await result.Pool(this, cancellationToken);
             }
+            else
+            {
+                result.Initialize(ptr);
+            }
 
             return result;
         }

@@ -45,7 +45,7 @@ namespace Intel.RealSense.Frames
             if ((uint)index < (uint)frameSet.Count)
             {
                 var ptr = NativeMethods.rs2_extract_frame(frameSet.Instance.Handle, index, out var error);
-                var task = context.FramePool.CreateFrame(ptr, CancellationToken.None);
+                var task = context.FramePool.Next(ptr, CancellationToken.None);
                 task.Wait();
                 Current = task.Result;
                 index++;

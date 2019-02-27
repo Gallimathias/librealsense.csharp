@@ -30,7 +30,7 @@ namespace Intel.RealSense.Frames
         public Task<Frame> AsFrame(CancellationToken token)
         {
             NativeMethods.rs2_frame_add_ref(Instance.Handle, out var error);
-            return context.FramePool.CreateFrame(Instance.Handle, token);
+            return context.FramePool.Next(Instance.Handle, token);
         }
 
         public T FirstOrDefault<T>(Stream stream, Format format = Format.Any) where T : Frame
@@ -67,7 +67,7 @@ namespace Intel.RealSense.Frames
             for (int i = 0; i < Count; i++)
             {
                 var ptr = NativeMethods.rs2_extract_frame(Instance.Handle, i, out var error);
-                var task = context.FramePool.CreateFrame(ptr, CancellationToken.None);
+                var task = context.FramePool.Next(ptr, CancellationToken.None);
                 task.Wait();
                 yield return task.Result;
             }
@@ -83,7 +83,7 @@ namespace Intel.RealSense.Frames
             get
             {
                 var ptr = NativeMethods.rs2_extract_frame(Instance.Handle, index, out var error);
-                var task = context.FramePool.CreateFrame(ptr, CancellationToken.None);
+                var task = context.FramePool.Next(ptr, CancellationToken.None);
                 task.Wait();
                 return task.Result;
             }

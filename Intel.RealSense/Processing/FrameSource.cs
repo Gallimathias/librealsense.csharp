@@ -25,7 +25,7 @@ namespace Intel.RealSense.Processing
            int bpp, int width, int height, int stride, CancellationToken token, Extension extension = Extension.VideoFrame) where T : Frame
         {
             var fref = NativeMethods.rs2_allocate_synthetic_video_frame(Instance.Handle, profile.Instance.Handle, original.Instance.Handle, bpp, width, height, stride, extension, out var error);
-            return (await context.FramePool.CreateFrame(fref, token)) as T;
+            return (await context.FramePool.Next(fref, token)) as T;
         }
 
         [Obsolete("This method is obsolete. Use AllocateCompositeFrame with DisposeWith method instead")]

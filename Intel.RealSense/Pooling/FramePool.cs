@@ -14,7 +14,7 @@ namespace Intel.RealSense.Pooling
         {
         }
 
-        internal async Task<Frame> CreateFrame(IntPtr ptr, CancellationToken token)
+        internal async Task<Frame> Next(IntPtr ptr, CancellationToken token)
         {
             if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.Points, out var error) > 0) ;
             else if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.DepthFrame, out error) > 0) ;
@@ -25,8 +25,13 @@ namespace Intel.RealSense.Pooling
             if (frame == null)
             {
                 frame = new Frame(context, ptr);
+                await frame.Pool(this, token);
             }
-            frame.Initialize(ptr);
+            else
+            {
+                frame.Initialize(ptr);
+            }
+
             return frame;
         }
     }

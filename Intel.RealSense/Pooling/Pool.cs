@@ -27,7 +27,7 @@ namespace Intel.RealSense.Pooling
             }
             else
             {
-                return default(T);
+                return default;
             }
         }, cancellationToken);
 

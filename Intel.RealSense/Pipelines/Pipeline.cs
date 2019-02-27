@@ -35,10 +35,8 @@ namespace Intel.RealSense.Pipelines
 
         public async Task<FrameSet> WaitForFrames(CancellationToken token, uint timeoutMs = 5000)
         {
-            var ptr = NativeMethods.rs2_pipeline_wait_for_frames(instance.Handle, timeoutMs, out var error);
-            var frameSet = await context.FrameSetPool.Next(token);
-            frameSet.Initialize(ptr);
-            return frameSet;
+            var ptr = await Task.Run(() => NativeMethods.rs2_pipeline_wait_for_frames(instance.Handle, timeoutMs, out var error));
+            return await context.FrameSetPool.Next(ptr, token);
         }
 
         public bool PollForFrames(out FrameSet result)
@@ -47,7 +45,7 @@ namespace Intel.RealSense.Pipelines
 
             if (NativeMethods.rs2_pipeline_poll_for_frames(instance.Handle, out IntPtr ptr, out var error) > 0)
             {
-                var task = context.FrameSetPool.Next(CancellationToken.None);
+                var task = context.FrameSetPool.Next(ptr, CancellationToken.None);
                 task.Wait();
                 result = task.Result;
                 return true;

@@ -27,27 +27,25 @@ namespace Intel.RealSense.Frames
 
             if (NativeMethods.rs2_poll_for_frame(Instance.Handle, out IntPtr ptr, out var error) > 0)
             {
-                var task = context.FramePool.CreateFrame(ptr, CancellationToken.None);
+                var task = context.FramePool.Next(ptr, CancellationToken.None);
                 task.Wait();
                 frame = task.Result;
                 return true;
             }
-            
+
             return false;
         }
 
         public Task<Frame> WaitForFrame(CancellationToken token, uint timeoutMs = 5000)
         {
             var ptr = NativeMethods.rs2_wait_for_frame(Instance.Handle, timeoutMs, out var error);
-            return context.FramePool.CreateFrame(ptr, token);
+            return context.FramePool.Next(ptr, token);
         }
 
         public async Task<FrameSet> WaitForFrames(CancellationToken token, uint timeoutMs = 5000)
         {
-            var ptr = NativeMethods.rs2_wait_for_frame(Instance.Handle, timeoutMs, out var error);
-            var frameSet = await context.FrameSetPool.Next(token);
-            frameSet.Initialize(ptr);
-            return frameSet;
+            var ptr = await Task.Run(() => NativeMethods.rs2_wait_for_frame(Instance.Handle, timeoutMs, out var error));
+            return await context.FrameSetPool.Next(ptr, token);
         }
 
         public void Enqueue(Frame f)
@@ -64,7 +62,7 @@ namespace Intel.RealSense.Frames
             }
         }
 
-        IEnumerator IEnumerable.GetEnumerator() 
+        IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
 
         #region IDisposable Support
@@ -103,10 +101,10 @@ namespace Intel.RealSense.Frames
             Dispose(false);
         }
 
-        
-        
 
-      
+
+
+
         #endregion
     }
 }

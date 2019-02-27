@@ -46,7 +46,7 @@ namespace Intel.RealSense.Frames
         public Task<Frame> Clone(CancellationToken token)
         {
             NativeMethods.rs2_frame_add_ref(Instance.Handle, out var error);
-            return context.FramePool.CreateFrame(Instance.Handle, token);
+            return context.FramePool.Next(Instance.Handle, token);
         }
 
         public virtual void Initialize(IntPtr ptr)

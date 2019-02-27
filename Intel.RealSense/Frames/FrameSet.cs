@@ -26,7 +26,7 @@ namespace Intel.RealSense.Frames
         private Pool<FrameSet> pool;
         private bool initialized;
         private readonly Context context;
-        
+
         public Task<Frame> AsFrame(CancellationToken token)
         {
             NativeMethods.rs2_frame_add_ref(Instance.Handle, out var error);
@@ -41,7 +41,7 @@ namespace Intel.RealSense.Frames
 
                 using (var fp = frame.Profile)
                     if (fp.Stream == stream && (format == Format.Any || fp.Format == format))
-                        return frame as T;
+                        return (T)frame;
 
                 frame.Dispose();
             }
@@ -107,7 +107,7 @@ namespace Intel.RealSense.Frames
             this.context = context;
         }
         internal FrameSet(Context context, IntPtr ptr) : this(context)
-        {            
+        {
             Initialize(ptr);
         }
 
@@ -128,7 +128,7 @@ namespace Intel.RealSense.Frames
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
-        
+
 
         protected virtual void Dispose(bool disposing)
         {
@@ -179,24 +179,24 @@ namespace Intel.RealSense.Frames
             disposables.Add(disposable);
         }
 
-        public static FrameSet FromFrame(Frame composite, Pool<FrameSet> pool)
+        public static FrameSet FromFrame(Context context, Frame composite)
         {
             if (!composite.IsComposite)
                 throw new ArgumentException("The frame is a not composite frame", nameof(composite));
 
             NativeMethods.rs2_frame_add_ref(composite.Instance.Handle, out object error);
-            var task = pool.Next(CancellationToken.None);
+            var task = context.FrameSetPool.Next(composite.Instance.Handle, CancellationToken.None);
             task.Wait();
             var frameSet = task.Result;
             frameSet.Initialize(composite.Instance.Handle);
             return frameSet;
         }
-        [Obsolete("This method is obsolete. Use DisposeWith method instead")]
+        [Obsolete("This method is obsolete. Use DisposeWith method instead", true)]
         public static FrameSet FromFrame(Frame composite, FramesReleaser releaser)
-            => FromFrame(composite, null as Pool<FrameSet>).DisposeWith(releaser);
+            => FromFrame(null, composite).DisposeWith(releaser);
 
 
-        public Task Pool(IAsyncPool pool, CancellationToken cancellationToken) 
+        public Task Pool(IAsyncPool pool, CancellationToken cancellationToken)
             => Task.Run(() => this.pool = pool as Pool<FrameSet>, cancellationToken);
 
         public Task Release(CancellationToken cancellationToken)

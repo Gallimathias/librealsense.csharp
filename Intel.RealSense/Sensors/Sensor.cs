@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Intel.RealSense.Sensors
 {
@@ -92,7 +93,10 @@ namespace Intel.RealSense.Sensors
         {
             void cb2(IntPtr f, IntPtr u)
             {
-                using (var frame = new Frame(context, f))
+                var task = context.FramePool.Next(f, CancellationToken.None);
+                task.Wait();
+
+                using (var frame = task.Result)
                     cb(frame);
             }
             callback = cb2;

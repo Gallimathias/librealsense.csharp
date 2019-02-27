@@ -55,10 +55,10 @@ namespace Intel.RealSense.Frames
             Initialized = true;
         }
 
-        public  FrameSet AsFrameSet()
-            => FrameSet.FromFrame(this,context.FrameSetPool);
+        public FrameSet AsFrameSet()
+            => FrameSet.FromFrame(context, this);
 
-        public  Task<Frame> ApplyFilter(IProcessingBlock block, CancellationToken token)
+        public Task<Frame> ApplyFilter(IProcessingBlock block, CancellationToken token)
             => block.Process(this, token);
 
 

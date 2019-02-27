@@ -16,15 +16,19 @@ namespace Intel.RealSense.Pooling
 
         internal async Task<Frame> Next(IntPtr ptr, CancellationToken token)
         {
-            if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.Points, out var error) > 0) ;
-            else if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.DepthFrame, out error) > 0) ;
-            else if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.VideoFrame, out error) > 0) ;
-
             var frame = await Next(token);
 
             if (frame == null)
             {
-                frame = new Frame(context, ptr);
+                if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.Points, out var error) > 0)
+                    frame = new Points(context, ptr);
+                else if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.DepthFrame, out error) > 0)
+                    frame = new DepthFrame(context, ptr);
+                else if (NativeMethods.rs2_is_frame_extendable_to(ptr, Extension.VideoFrame, out error) > 0)
+                    frame = new VideoFrame(context, ptr);
+                else
+                    frame = new Frame(context, ptr);
+
                 await frame.Pool(this, token);
             }
             else

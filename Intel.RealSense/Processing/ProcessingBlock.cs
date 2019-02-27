@@ -45,7 +45,7 @@ namespace Intel.RealSense.Processing
 
             using (var singleOriginal = await original.AsFrame(token))
             using (var processed = await Process(singleOriginal, token))
-                rv = FrameSet.FromFrame(processed, context.FrameSetPool);
+                rv = FrameSet.FromFrame(context, processed);
 
             return rv;
         }

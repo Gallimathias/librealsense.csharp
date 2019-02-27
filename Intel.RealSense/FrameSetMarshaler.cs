@@ -1,17 +1,25 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Intel.RealSense
 {
     class FrameSetMarshaler : ICustomMarshaler
     {
         private static FrameSetMarshaler instance;
+        private readonly Context context;
 
-        public static ICustomMarshaler GetInstance(string s)
+        private FrameSetMarshaler(Context context)
+        {
+            this.context = context;
+        }
+
+        public static ICustomMarshaler GetInstance(Context context)
         {
             if (instance == null)
             {
-                instance = new FrameSetMarshaler();
+                instance = new FrameSetMarshaler(context);
             }
             return instance;
         }
@@ -36,7 +44,9 @@ namespace Intel.RealSense
 
         public object MarshalNativeToManaged(IntPtr pNativeData)
         {
-            return new FrameSet(pNativeData);
+            var task = context.FrameSetPool.Next(pNativeData, CancellationToken.None);
+            task.Wait();
+            return task.Result;
         }
     }
 }

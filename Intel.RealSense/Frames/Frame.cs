@@ -1,4 +1,5 @@
 ﻿using Intel.RealSense.Pooling;
+using Intel.RealSense.Processing;
 using Intel.RealSense.Profiles;
 using Intel.RealSense.Types;
 using System;
@@ -53,7 +54,13 @@ namespace Intel.RealSense.Frames
             Instance = new HandleRef(this, ptr);
             Initialized = true;
         }
-        
+
+        public  FrameSet AsFrameSet()
+            => FrameSet.FromFrame(this,context.FrameSetPool);
+
+        public  Task<Frame> ApplyFilter(IProcessingBlock block, CancellationToken token)
+            => block.Process(this, token);
+
 
         #region IDisposable Support
         private bool disposedValue = false;

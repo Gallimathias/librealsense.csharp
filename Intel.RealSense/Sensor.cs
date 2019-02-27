@@ -38,17 +38,18 @@ namespace Intel.RealSense
         public delegate void FrameCallback(Frame frame);
 
         protected readonly IntPtr instance;
-
+        private readonly Context context;
         private CameraInfos info;
         private SensorOptions options;
         private FrameCallbackHandler callback;
         private FrameQueue queue;
 
-        internal Sensor(IntPtr sensor)
+        internal Sensor(Context context, IntPtr sensor)
         {
             //if (sensor == IntPtr.Zero)
             //    throw new ArgumentNullException();
             instance = sensor;
+            this.context = context;
         }
 
         /// <summary>
@@ -82,7 +83,7 @@ namespace Intel.RealSense
         {
             void cb2(IntPtr f, IntPtr u)
             {
-                using (var frame = new Frame(f))
+                using (var frame = new Frame(context, f))
                     cb(frame);
             }
             callback = cb2;
@@ -200,7 +201,8 @@ namespace Intel.RealSense
             }
 
             public Option Key { get; }
-            public string Description {
+            public string Description
+            {
                 get
                 {
                     if (description == null)
@@ -236,7 +238,7 @@ namespace Intel.RealSense
             private readonly float max;
             private readonly float step;
             private readonly float @default;
-            
+
             public CameraOption(IntPtr sensor, Option option)
             {
                 this.sensor = sensor;

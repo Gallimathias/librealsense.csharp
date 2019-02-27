@@ -13,15 +13,17 @@ namespace Intel.RealSense
             get
             {
                 var ptr = NativeMethods.rs2_create_sensor(instance, index, out var error);
-                return new Sensor(ptr);
+                return new Sensor(context, ptr);
             }
         }
 
         private IntPtr instance;
+        private readonly Context context;
 
-        public SensorList(IntPtr ptr)
+        public SensorList(Context context, IntPtr ptr)
         {
             instance = ptr;
+            this.context = context;
         }
 
         public IEnumerator<Sensor> GetEnumerator()
@@ -31,7 +33,7 @@ namespace Intel.RealSense
             for (int i = 0; i < sensorCount; i++)
             {
                 var ptr = NativeMethods.rs2_create_sensor(instance, i, out error);
-                yield return new Sensor(ptr);
+                yield return new Sensor(context, ptr);
             }
         }
 

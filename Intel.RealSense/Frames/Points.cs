@@ -9,7 +9,7 @@ namespace Intel.RealSense.Frames
         public IntPtr VertexData => NativeMethods.rs2_get_frame_vertices(Instance.Handle, out var error);
         public IntPtr TextureData => NativeMethods.rs2_get_frame_texture_coordinates(Instance.Handle, out var error);
 
-        public Points(IntPtr ptr) : base(ptr)
+        public Points(Context context, IntPtr ptr) : base(context, ptr)
         {
         }
 

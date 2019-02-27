@@ -22,14 +22,15 @@ namespace Intel.RealSense.Devices
         public SensorList Sensors => QuerySensors();
 
         internal IntPtr Instance;
-
         private CameraInfos cameraInfo;
+        protected readonly Context context;
 
-        internal Device(IntPtr dev)
+        internal Device(Context context, IntPtr dev)
         {
             //if (dev == IntPtr.Zero)
             //    throw new ArgumentNullException();
             Instance = dev;
+            this.context = context;
         }
 
         /// <summary>
@@ -39,7 +40,7 @@ namespace Intel.RealSense.Devices
         public SensorList QuerySensors()
         {
             var ptr = NativeMethods.rs2_query_sensors(Instance, out var error);
-            return new SensorList(ptr);
+            return new SensorList(context, ptr);
         }
 
         #region IDisposable Support

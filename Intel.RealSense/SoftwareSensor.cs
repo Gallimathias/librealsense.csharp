@@ -7,7 +7,7 @@ namespace Intel.RealSense
 {
     public class SoftwareSensor : Sensor
     {
-        internal SoftwareSensor(IntPtr ptr) : base(ptr)
+        internal SoftwareSensor(Context context, IntPtr ptr) : base(context, ptr)
         {
         }
 

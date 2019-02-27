@@ -11,7 +11,7 @@ namespace Intel.RealSense.Frames
 
         public int BitsPerPixel => NativeMethods.rs2_get_frame_bits_per_pixel(Instance.Handle, out var error);
 
-        public VideoFrame(IntPtr ptr) : base(ptr)
+        public VideoFrame(Context context, IntPtr ptr) : base(context, ptr)
         {
         }
 

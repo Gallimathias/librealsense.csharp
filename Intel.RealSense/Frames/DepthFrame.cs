@@ -5,7 +5,7 @@ namespace Intel.RealSense.Frames
 {
     public class DepthFrame : VideoFrame
     {
-        public DepthFrame(IntPtr ptr) : base(ptr)
+        public DepthFrame(Context context, IntPtr ptr) : base(context, ptr)
         {
         }
 

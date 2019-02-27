@@ -2,6 +2,8 @@
 using Intel.RealSense.Types;
 using System;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Intel.RealSense.Processing
 {
@@ -15,7 +17,7 @@ namespace Intel.RealSense.Processing
         private readonly FrameCallbackHandler frameCallback;
         private readonly FrameProcessorCallbackHandler frameProcessorCallback;
 
-        public CustomProcessingBlock(FrameProcessorCallback cb)
+        public CustomProcessingBlock(Context context, FrameProcessorCallback cb) : base(context)
         {
             frameCallback = new FrameCallbackHandler(ProcessingBlockFrameCallback);
             frameProcessorCallback = new FrameProcessorCallbackHandler(ProcessingBlockCallback);
@@ -25,16 +27,16 @@ namespace Intel.RealSense.Processing
             Instance = new HandleRef(this, pb);
         }
 
-        public void ProcessFrame(Frame f)
+        public Task ProcessFrame(Frame f) => Task.Run(() =>
         {
             NativeMethods.rs2_frame_add_ref(f.Instance.Handle, out var error);
             NativeMethods.rs2_process_frame(Instance.Handle, f.Instance.Handle, out error);
-        }
+        });
 
-        public void ProcessFrames(FrameSet fs)
+        public async Task ProcessFrames(FrameSet fs, CancellationToken token)
         {
-            using (var f = fs.AsFrame())
-                ProcessFrame(f);
+            using (var f = await fs.AsFrame(token))
+               await ProcessFrame(f);
         }
 
         /// <summary>
@@ -72,17 +74,21 @@ namespace Intel.RealSense.Processing
             base.Dispose(disposing);
         }
 
-        private static void ProcessingBlockCallback(IntPtr f, IntPtr src, IntPtr u)
+        private void ProcessingBlockCallback(IntPtr f, IntPtr src, IntPtr u)
         {
             var callback = GCHandle.FromIntPtr(u).Target as FrameProcessorCallback;
-            using (var frame = Frame.CreateFrame(f))
-                callback(frame, new FrameSource(new HandleRef(frame, src)));
+            var task = context.FramePool.CreateFrame(f, CancellationToken.None);
+            task.Wait();
+            using (var frame = task.Result)
+                callback(frame, new FrameSource(new HandleRef(frame, src), context));
         }
 
-        private static void ProcessingBlockFrameCallback(IntPtr f, IntPtr u)
+        private void ProcessingBlockFrameCallback(IntPtr f, IntPtr u)
         {
             var callback = GCHandle.FromIntPtr(u).Target as FrameCallback;
-            using (var frame = Frame.CreateFrame(f))
+            var task = context.FramePool.CreateFrame(f, CancellationToken.None);
+            task.Wait();
+            using (var frame = task.Result)
                 callback(frame);
         }
     }

@@ -64,13 +64,13 @@ namespace Intel.RealSense
             var ptr = NativeMethods.rs2_query_devices_ex(instance.Handle,
                 include_platform_camera ? 0xff : 0xfe, out var error);
 
-            return new DeviceList(ptr);
+            return new DeviceList(this, ptr);
         }
 
         private void InvokeDevicesChanged(IntPtr removedList, IntPtr addedList, IntPtr userData)
         {
-            using (var removed = new DeviceList(removedList))
-            using (var added = new DeviceList(addedList))
+            using (var removed = new DeviceList(this, removedList))
+            using (var added = new DeviceList(this, addedList))
                 OnDevicesChanged?.Invoke(removed, added);
         }
 

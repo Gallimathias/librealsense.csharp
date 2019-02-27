@@ -1,5 +1,6 @@
 ﻿using Intel.RealSense.Frames;
 using Intel.RealSense.Pooling;
+using Intel.RealSense.Processing;
 using Intel.RealSense.Types;
 using System;
 using System.Collections;
@@ -100,7 +101,7 @@ namespace Intel.RealSense
 
         internal FrameSet(Context context)
         {
-            enumerator = new FrameEnumerator(this);
+            enumerator = new FrameEnumerator(context, this);
             disposables = new List<IDisposable>();
             initialized = false;
             this.context = context;
@@ -109,6 +110,9 @@ namespace Intel.RealSense
         {            
             Initialize(ptr);
         }
+
+        public Task<FrameSet> ApplyFilter(IProcessingBlock block, CancellationToken token)
+           => block.Process(this, token);
 
         internal void Initialize(IntPtr ptr)
         {

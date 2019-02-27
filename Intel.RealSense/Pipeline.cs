@@ -22,12 +22,12 @@ namespace Intel.RealSense
         public PipelineProfile Start()
         {
             var res = NativeMethods.rs2_pipeline_start(instance.Handle, out var error);
-            return new PipelineProfile(res);
+            return new PipelineProfile(context, res);
         }
         public PipelineProfile Start(Config cfg)
         {
             var res = NativeMethods.rs2_pipeline_start_with_config(instance.Handle, cfg.Instance.Handle, out var error);
-            return new PipelineProfile(res);
+            return new PipelineProfile(context, res);
         }
 
         public void Stop()

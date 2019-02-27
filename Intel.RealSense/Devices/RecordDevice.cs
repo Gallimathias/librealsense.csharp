@@ -16,7 +16,7 @@ namespace Intel.RealSense.Devices
 
         private readonly IntPtr dev;
 
-        public RecordDevice(Device dev, string file) : base(IntPtr.Zero)
+        public RecordDevice(Context context, Device dev, string file) : base(context, IntPtr.Zero)
         {
             this.dev = dev.Instance;
             Instance = NativeMethods.rs2_create_record_device(this.dev, file, out var error);

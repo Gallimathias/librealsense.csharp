@@ -18,6 +18,9 @@ namespace DemoProject
         {
             using (var context = new Context())
             {
+                if (context.Devices.Count < 1)
+                    return;
+
                 var device = context.Devices[0];
                 var pipeline = new Pipeline(context);
 
